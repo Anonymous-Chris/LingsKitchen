@@ -1,0 +1,571 @@
+var HI_POSTCODE_MIN = 96701;
+var HI_POSTCODE_MAX = 96898;
+var AK_POSTCODE_MIN = 99501;
+var AK_POSTCODE_MAX = 99950;
+
+var AK_STATE_A = 'AK';
+var AK_STATE = 'Alaska';
+var HI_STATE_A = 'HI';
+var HI_STATE = 'Hawaii';
+
+var SHIPPING_NO = 'no';
+var SHIPPING_INCREASE = 'increase';
+var SHIPPING_DECREASE = 'decrease';
+var CACHED_QUOTES = {};
+var USE_CACHED_QUOTES = false;
+
+var UPS = (function($, module){
+
+	module.loadUPSTracking = function(){
+		var trackingInfo = location.hostname+'/menu/getUPSExpectedDeliveryDate.do';
+		
+		var hideUPSCall = false;
+		if(UPS.checkoutConfirmationView){
+			trackingInfo = trackingInfo + "?checkout=true";
+			if(UPS.skipShip){
+				trackingInfo = trackingInfo + "&skipShip=true";
+			}
+			
+			var $shippingPostalCode = $('#shippingPostalCode').text();
+			if($shippingPostalCode !== undefined && $shippingPostalCode != ""){
+				trackingInfo = trackingInfo + "&shippingPostalCode="+$shippingPostalCode;
+			}else{
+				hideUPSCall = true;
+			}
+			
+			var $shippingState = $('#shippingState').text();
+			if($shippingState !== undefined && $shippingState != ""){
+				trackingInfo = trackingInfo + "&shippingState="+$shippingState;
+			}
+			
+			var $shippingCity = $('#shippingCity').text();
+			if($shippingCity !== undefined && $shippingCity != ""){
+				trackingInfo = trackingInfo + "&shippingCity="+$shippingCity;
+			}
+			
+			var $shippingLastAddedMenu = $('#shippingLastAddedMenu').text();
+			if($shippingLastAddedMenu !== undefined && $shippingLastAddedMenu != ""){
+				trackingInfo = trackingInfo + "&shippingLastAddedMenu="+$shippingLastAddedMenu;
+			}
+			
+			var bigQuantities = false;
+		    var cartInfo = LANDA.Constant.shoppingCart;
+		    if (cartInfo !== undefined && cartInfo != null && cartInfo.is_empty != "true") {
+		    	var lastMenuData = $shippingLastAddedMenu.split('|');
+		    	var lastMenuId = lastMenuData[0];
+		    	
+				if (typeof cartInfo.menus_qty === 'String') cartInfo.menus_qty = JSON.parse(cartInfo.menus_qty);
+				for (var qty in cartInfo.menus_qty){ 
+					if (cartInfo.menus_qty.hasOwnProperty(qty)) {
+						var menuQty = cartInfo.menus_qty[qty];
+						menuQty = menuQty.replace("Quantity ", "");
+						
+						if(qty == lastMenuId){
+							trackingInfo = trackingInfo + "&menuQty="+menuQty;
+						}
+						
+						console.log(menuQty);
+						if (menuQty == '7500' || menuQty == '10000') {
+							bigQuantities = true;
+						}
+					}
+				}
+		    }
+		    
+		    if (bigQuantities) 
+		    	trackingInfo = trackingInfo + "&bigQuantities=true";
+		    
+		}else if(UPS.checkoutShippingView){
+			trackingInfo = trackingInfo + "?checkout=true";
+			
+			var $shippingPostalCode = $('#shippingPostalCode').text();
+			if($shippingPostalCode !== undefined && $shippingPostalCode != ""){
+				trackingInfo = trackingInfo + "&shippingPostalCode="+$shippingPostalCode;
+			}
+			
+			var $shippingState = $('#shippingState').text();
+			if($shippingState !== undefined && $shippingState != ""){
+				trackingInfo = trackingInfo + "&shippingState="+$shippingState;
+			}
+			
+			var $shippingCity = $('#shippingCity').text();
+			if($shippingCity !== undefined && $shippingCity != ""){
+				trackingInfo = trackingInfo + "&shippingCity="+$shippingCity;
+			}
+			
+			var $shippingLastAddedMenu = $('#shippingLastAddedMenu').text();
+			if($shippingLastAddedMenu !== undefined && $shippingLastAddedMenu != ""){
+				trackingInfo = trackingInfo + "&shippingLastAddedMenu="+$shippingLastAddedMenu;
+			}
+			
+		    var cartInfo = LANDA.Constant.shoppingCart;
+		    if (cartInfo !== undefined && cartInfo != null && cartInfo.is_empty != "true") {
+		    	var lastMenuData = $shippingLastAddedMenu.split('|');
+		    	var lastMenuId = lastMenuData[0];
+		    	
+		    	var bigQuantities = false;
+		    	
+				if (typeof cartInfo.menus_qty === 'String') cartInfo.menus_qty = JSON.parse(cartInfo.menus_qty);
+				for (var qty in cartInfo.menus_qty){ 
+					if (cartInfo.menus_qty.hasOwnProperty(qty)) {
+						if(qty == lastMenuId){
+							var menuQty = cartInfo.menus_qty[qty];
+							menuQty = menuQty.replace("Quantity ", "");
+							trackingInfo = trackingInfo + "&menuQty="+menuQty;
+							
+							console.log(menuQty);
+							if (menuQty == '7500' || menuQty == '10000') {
+								bigQuantities = true;
+							}
+						}
+					}
+				}
+		    }
+
+		    if (bigQuantities) 
+		    	trackingInfo = trackingInfo + "&bigQuantities=true";
+		}else{
+			
+			USE_CACHED_QUOTES = true;
+			
+			trackingInfo = trackingInfo + "?pqp=true";
+			
+			var pdfId = $('#pdfId').val();
+			if(pdfId !== undefined && pdfId != ""){
+				trackingInfo = trackingInfo + "&pdfId="+pdfId;
+			}
+			
+			var menuGroupId = $('#menuGroupId').val();
+			if(menuGroupId !== undefined && menuGroupId != ""){
+				trackingInfo = trackingInfo + "&menuGroupId="+menuGroupId;
+			}
+			
+			var menuDocumentId = $('#menuDocumentId').val();
+			if(menuDocumentId !== undefined && menuDocumentId != ""){
+				trackingInfo = trackingInfo + "&menuDocumentId="+menuDocumentId;
+			}
+			
+			var postalCode = $('#postalCode').val();
+			if(postalCode !== undefined && postalCode != ""){
+				trackingInfo = trackingInfo + "&postalCode="+postalCode;
+			}
+			
+			var optQuantity = $("#optQuantity").find(":selected").text();
+			if(optQuantity !== undefined && optQuantity != ""){
+				trackingInfo = trackingInfo + "&optQuantity="+optQuantity;
+				
+				if (optQuantity == '7500' || optQuantity == '10000') {
+					trackingInfo = trackingInfo + "&bigQuantities=true";
+				}
+			}
+			
+			var defaultFacility = $("#defaultFacility").val();
+			if(defaultFacility !== undefined && defaultFacility != ""){
+				trackingInfo = trackingInfo + "&defaultFacility="+defaultFacility;
+			}else{
+				var defaultFacility = "";
+				try{
+					defaultFacility = print.PrintQuoteUtils.activeSelection.facility;
+				}catch(err){}
+				if(defaultFacility !== undefined && defaultFacility != ""){
+					trackingInfo = trackingInfo + "&defaultFacility="+defaultFacility;
+				}
+			} 
+		}
+			
+		if(hideUPSCall){
+			$('#ups-estimation-form').hide();
+		}else{
+			$('#ups-estimation-form').show();
+		}
+		
+	    try{
+	    	trackingInfo =  location.protocol + '//' + trackingInfo.replace(/.*?:\/\//g, "");
+	    	trackingInfo = trackingInfo.replace(/\|/g, '%7c');
+	    }catch(err){console.log(err)};
+	    
+	    var trackingCallback = function(data){
+
+			if (data !== undefined && data != null && data != "") {
+				try {
+					
+					CACHED_QUOTES[encodeURI(trackingInfo)] = data;
+						
+					var shippingEstimates = JSON.parse(data);
+					var expeditedShipping = shippingEstimates.expeditedShipping;
+					var standardShipping = shippingEstimates.standardShipping;
+					
+					if (standardShipping == undefined && expeditedShipping == undefined) {
+						$('#wrong-postcode').show('fast');
+						$('.confirmation-checkout').attr("disabled", true);
+					}
+//					} else {
+//						$('#wrong-postcode').hide('fast');
+//						$('.confirmation-checkout').attr("disabled", false);
+//					}
+					
+					$shippingDeliveryType = 'mhmSimple';
+					shippingDeliveryTypeValidation = false;
+					if(UPS.recalculateShipping){
+						shippingDeliveryTypeValidation = true;
+						
+						$shippingDeliveryType = $('#shipping_delivery_type').val();
+					}
+					
+					if (UPS.hasOnlyPosterProducts) {
+						$shippingDeliveryType = 'mhmExpedited';
+						$('#shipping_method').val(2);
+						$('#posterOnlyProducts').val("true");
+					}
+					
+					if(expeditedShipping !== undefined && expeditedShipping != ""){
+						if(UPS.checkoutShippingView){
+							if(expeditedShipping == "remove_shipping"){
+								$("#mhmExpedited").closest('tr').hide();
+							}else{
+								$('#mhmExpedited').html("<b>Expedited Shipping and Processing, expect delivery on "+expeditedShipping+"</b>");
+							}
+						}else if(UPS.checkoutConfirmationView){
+							if(expeditedShipping == "remove_shipping" && !UPS.hasOnlyPosterProducts){
+								$("#mhmExpedited").closest('tr').hide();
+								$("#changeShippingMethod").hide();
+								
+								
+								if(shippingDeliveryTypeValidation && $shippingDeliveryType === 'mhmExpedited'){
+									$.ajax({
+										async: true,
+										type: 'POST',
+										url: 'checkout_address_save.php', 
+										data: $('#checkout_confirmation_form').serialize(),
+										success: function (data) {},
+									    dataType: 'json'
+									}).always(function (dataOrjqXHR, textStatus, jqXHRorErrorThrown) { 
+										window.location = $('#changeShippingUrl').val()+"?ups=false&uship=st";
+									});
+								}
+							}else{
+								if(shippingDeliveryTypeValidation && $shippingDeliveryType === 'mhmSimple'){
+									$.ajax({
+										async: true,
+										type: 'GET',
+										url: 'upgrade_shipping.php', 
+										data: 'uship=st&zip='+$('#postcode').val()+"&state="+$('#state').val(),
+										success: function (data) {
+											var $shippingResponse = typeof data === 'object' ? data : JSON.parse(data);
+						                    if ($shippingResponse != null){
+						                    	if(true === $shippingResponse.show_expedited ){
+						                    		$('#shipping_estimation_button').html('<a id="changeShippingMethod" href="#" data-ship="ex" class="btn btn-brand-sq">Upgrade to Expedited Shipping</a>');
+						                    	}
+						                    }
+										},
+									    dataType: 'json'
+									});
+								}else{
+									var state = $('#state').val();
+									if ((UPS.hasOnlyPosterProducts && expeditedShipping == "remove_shipping") ||
+										(state == AK_STATE_A || state == AK_STATE || state == HI_STATE_A || state == HI_STATE)) {
+										expeditedShipping = standardShipping;
+									}
+									
+									$('#mhmExpedited').html("");
+									//$('#mhmExpedited').html("Expedited Shipping and Processing "+$("#shippingPrice").html()+" <br>");
+									$('#mhmExpedited').append("<span class='tracking-info'>Expect delivery on <span class='tracking-delivery'><b>"+expeditedShipping+"</b></span></span>");
+									//$('#mhmExpedited').append("Expect delivery on <b>"+expeditedShipping+"</b>");
+									$('#shipping_delivery_date_exp').val(expeditedShipping);
+								}
+							}
+						}else if(expeditedShipping != "remove_shipping"){
+							$('#expeditedShipping').show();
+							$('#expeditedShipping span').text(expeditedShipping);
+							$('#shipping_delivery_date_exp').val(expeditedShipping);
+						}
+						$('#showPaymentMethodInfo').show();
+					}else{
+						$('#expeditedShipping').hide();
+					}
+					
+					if(standardShipping !== undefined && standardShipping != "" && !UPS.hasOnlyPosterProducts){
+						var metroAreaZip = '';
+						if(UPS.showExpeditedEstimation){
+							if(expeditedShipping !== undefined && expeditedShipping != ""){
+								metroAreaZip = ' (Metro area zip code! Standard estimation: ' + standardShipping + ')';
+								standardShipping = expeditedShipping;
+							}
+						}
+						
+						if(UPS.checkoutShippingView){
+							$('#mhmSimple').html("<b>Standard Shipping and Processing, expect delivery on "+standardShipping+"</b>");
+						}else if(UPS.checkoutConfirmationView){
+							if(shippingDeliveryTypeValidation && $shippingDeliveryType === 'mhmExpedited'){
+								$('#shipping_estimation_button').html('<div class="spacer"></div><a id="changeShippingMethod" href="#" data-ship="st" class="btn btn-brand-sq" data-original-title="" title="">Use Standard Shipping</a>');
+								
+								$.ajax({
+									async: true,
+									type: 'POST',
+									url: 'checkout_address_save.php', 
+									data: $('#checkout_confirmation_form').serialize(),
+									success: function (data) {},
+								    dataType: 'json'
+								});
+								
+								$.ajax({
+									async: true,
+									type: 'GET',
+									url: 'upgrade_shipping.php', 
+									data: 'uship=st&zip='+$('#postcode').val()+"&state="+$('#state').val(),
+									success: function (data) {
+										var $shippingResponse = typeof data === 'object' ? data : JSON.parse(data);
+					                    if ($shippingResponse != null){
+					                    	if(true !== $shippingResponse.show_expedited && !UPS.hasOnlyPosterProducts ){
+					                    		window.location = $('#changeShippingUrl').val()+"?ups=false&uship=st";
+					                    	}
+					                    }
+									},
+								    dataType: 'json'
+								});
+							}else{
+								$('#mhmSimple').html("");
+								//$('#mhmSimple').html("Standard Shipping and Processing "+$("#shippingPrice").html()+" <br>"); 
+								$('#mhmSimple').append("<span class='tracking-info'>Expect delivery on <span class='tracking-delivery'><b>"+standardShipping+"</b></span></span>");
+								//$('#mhmSimple').append("Expect delivery on <b>"+standardShipping+"</b>");
+								$('#shipping_delivery_date_std').val(standardShipping + metroAreaZip);
+							}
+						}else{
+							$('#standardShipping span').text(standardShipping);
+							$('#deliveryDate').show();
+							$('#shipping_delivery_date_std').val(standardShipping);
+						}
+						$('#showPaymentMethodInfo').show();
+					}else if (UPS.hasOnlyPosterProducts) {
+						$('#showPaymentMethodInfo').show();
+					}else{
+						$('#showPaymentMethodInfo').hide();
+					}
+					$('#shipping-spinner').remove();
+				
+					try {     
+						var restaurantLocationState = shippingEstimates.restaurantLocationState;
+						var restaurantLocationZip = shippingEstimates.restaurantLocationZip;
+						
+						$('#zipCodeValue').text(restaurantLocationZip);
+						$('#stateCodeValue').text(restaurantLocationState.toLowerCase());
+						
+						var $zipCodeShippingPrice = $('#zipCodeShippingPrice').text();
+						
+						if($zipCodeShippingPrice !== undefined && $zipCodeShippingPrice != ""){
+							$('#zip-shipping-price-panel').show();
+						}
+					}catch(err){console.log(err)};
+				} catch (e) { 
+	    		} 
+			}
+	    }
+	    
+	    var trackingKey = encodeURI(trackingInfo);
+	    if(USE_CACHED_QUOTES){
+	    	if(typeof(CACHED_QUOTES[trackingKey]) !== 'undefined'){
+	    		trackingCallback(CACHED_QUOTES[trackingKey])
+	    	}else{
+	    		jQuery.get(trackingInfo, trackingCallback);
+	    	}
+	    }else{
+			jQuery.get(trackingInfo, trackingCallback);
+	    }
+		
+	}
+	
+	module.loadEstimationForCheckoutConfirmationView = function(){
+		var $shippingEstimation = $('.shippingEstimation');
+		$shippingEstimation.css({position : 'relative'});
+		$shippingEstimation.append('<div id="shipping-spinner" style="position:absolute; left:0; top:0; width:100%; height:100%; background:rgba(255, 255, 255, .7)"></div>');
+		$('#shipping-spinner').html('<svg style="position:absolute; left:0; right:0; top:0; bottom:0; margin:auto; width:50px; height:50px; display:inline-block; "><image xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/images/loading-spin.svg" width="50" height="50" src="/images/loading-spin.png" ></image></svg>');
+		
+		var count = 1;
+		var x = setInterval(function(){
+			count+=1;
+			if (LANDA.Constant.shoppingCart !== undefined && LANDA.Constant.shoppingCart !== null) {
+				UPS.loadUPSTracking();
+				clearInterval(x);
+			}else if(count > 10){
+				clearInterval(x);
+			}
+		}, 1000);
+	}
+	
+	module.loadEstimationForCheckoutShippingView = function(){
+		$('.contentText').css({position : 'relative'});
+		$('.contentText').append('<div id="shipping-spinner" style="position:absolute; left:0; top:0; width:100%; height:100%; background:rgba(255, 255, 255, 1)"></div>');
+		$('#shipping-spinner').html('<svg style="position:absolute; left:0; right:0; top:0; bottom:0; margin:auto; width:50px; height:50px; display:inline-block; "><image xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/images/loading-spin.svg" width="50" height="50" src="/images/loading-spin.png" ></image></svg>');
+		
+		var count = 1;
+		var x = setInterval(function(){
+			count+=1;
+			if (LANDA.Constant.shoppingCart !== undefined && LANDA.Constant.shoppingCart !== null) {
+				UPS.loadUPSTracking();
+				clearInterval(x);
+			}else if(count > 10){
+				clearInterval(x);
+			}
+		}, 1000);
+	}
+	
+	module.updateShippingPrice = function(shippingPriceChange){
+		try{
+			if(shippingPriceChange === undefined){
+				
+				var $oldState = $('#old_state').val();
+				var $newState = $('#state').val();
+				
+			    if( $oldState !== undefined && $newState !== undefined ){
+			    	var newStateDouble = false;
+			    	if( $newState == AK_STATE_A || $newState == AK_STATE ||  $newState == HI_STATE_A || $newState == HI_STATE ){
+			    		newStateDouble = true;
+			    	}
+			    	
+			    	var oldStateDouble = false;
+			    	if( $oldState == AK_STATE_A || $oldState == AK_STATE ||  $oldState == HI_STATE_A || $oldState == HI_STATE ){
+			    		oldStateDouble = true;
+			    	}
+			    	
+			    	if( $oldState == $newState || ( newStateDouble  && oldStateDouble ) ){
+			    		shippingPriceChange = SHIPPING_NO;
+			    		
+						var $oldPostcode = $('#old_postcode').val();
+						var $newPostcode = $('#postcode').val();
+			    		
+						if( $oldPostcode !== undefined && $newPostcode !== undefined ){
+							
+							var oldPostcodeInt = parseInt($oldPostcode);
+							var newPostcodeInt = parseInt($newPostcode);
+							
+							var oldPostcodeDouble = false;
+							if( (oldPostcodeInt >= HI_POSTCODE_MIN && oldPostcodeInt <= HI_POSTCODE_MAX) || (oldPostcodeInt >= AK_POSTCODE_MIN && oldPostcodeInt <= AK_POSTCODE_MAX) ){
+								oldPostcodeDouble = true;
+							}
+							
+							var newPostcodeDouble = false;
+							if( (newPostcodeInt >= HI_POSTCODE_MIN && newPostcodeInt <= HI_POSTCODE_MAX) || (newPostcodeInt >= AK_POSTCODE_MIN && newPostcodeInt <= AK_POSTCODE_MAX) ){
+								newPostcodeDouble = true;
+							}
+						
+							if( oldPostcodeInt == newPostcodeInt || ( newPostcodeDouble  && oldPostcodeDouble ) ){
+								shippingPriceChange = SHIPPING_NO;
+							}else{
+								if( newPostcodeDouble ){
+									shippingPriceChange = SHIPPING_INCREASE;
+									
+									if( !newStateDouble ){
+										shippingPriceChange = SHIPPING_INCREASE;
+									}else{
+										shippingPriceChange = SHIPPING_NO;
+									}
+								}else{
+									shippingPriceChange = SHIPPING_NO;
+									
+									if( newPostcodeDouble && !oldPostcodeDouble){
+										shippingPriceChange = SHIPPING_INCREASE;
+									}else if( oldPostcodeDouble && !newPostcodeDouble){
+										shippingPriceChange = SHIPPING_DECREASE;
+									}
+								}
+							}
+					    }
+			    		
+			    	}else{
+			    		var $newPostcode = $('#postcode').val();
+			    		var newPostcodeInt = parseInt($newPostcode);
+
+			    		if( newStateDouble ){
+			    			shippingPriceChange = SHIPPING_INCREASE;
+
+			    			if( (newPostcodeInt >= HI_POSTCODE_MIN && newPostcodeInt <= HI_POSTCODE_MAX) || (newPostcodeInt >= AK_POSTCODE_MIN && newPostcodeInt <= AK_POSTCODE_MAX) ){
+			    				shippingPriceChange = SHIPPING_NO;
+			    			}
+			    		}else{
+			    			if( oldStateDouble ){
+			    				if( (newPostcodeInt >= HI_POSTCODE_MIN && newPostcodeInt <= HI_POSTCODE_MAX) || (newPostcodeInt >= AK_POSTCODE_MIN && newPostcodeInt <= AK_POSTCODE_MAX) ){
+			    					shippingPriceChange = SHIPPING_NO;
+			    				}else{
+			    					shippingPriceChange = SHIPPING_DECREASE;
+			    				}
+			    			}else{
+			    				shippingPriceChange = SHIPPING_NO;
+			    			}
+			    		}
+			    	}
+			    }
+			}
+			
+			if( shippingPriceChange !== undefined ){
+	        	var $shippingPrice = $('#shipping-processing-data').text();
+	        	if($shippingPrice !== undefined && $shippingPrice !== ""){
+	            	//$shippingPrice = $shippingPrice.replace("Shipping and Processing:","");
+	            	$shippingPrice = $shippingPrice.trim();
+
+                    if ($shippingPrice == 'FREE') $shippingPrice = 0
+	
+	            	var amount = parseFloat($shippingPrice).toFixed(2);
+	
+	            	var $totalPrice = $('#total-price-data').text();
+	            	if($totalPrice !== undefined && $totalPrice !== ""){
+	                	//$totalPrice = $totalPrice.replace("Total","");
+	                	$totalPrice = $totalPrice.replace("$","");
+	                	$totalPrice = $totalPrice.replace(",","");
+	                	$totalPrice = $totalPrice.trim();
+	            	}
+	
+	            	var amountTotalPrice = parseFloat($totalPrice).toFixed(2);
+	            	var newAmount = amount;
+	            	
+	            	var $newPostcode = $('#postcode').val();
+	            	var $oldPostcode = $('#old_postcode').val();
+	            	var $oldState = $('#old_state').val();
+					var $newState = $('#state').val();
+					
+					var isDoubled = false
+	            	if ( ((oldStateDouble && newStateDouble) || (oldPostcodeDouble && newPostcodeDouble)) && 
+	            		 ($newPostcode != $oldPostcode && $oldState != newState) )
+	            		isDoubled = true;
+	            	
+	        		if(SHIPPING_INCREASE == shippingPriceChange && !isDoubled) {
+	            		newAmount = parseFloat(amount*2).toFixed(2);
+	        		}else if(SHIPPING_DECREASE == shippingPriceChange){
+	            		newAmount = parseFloat(amount/2).toFixed(2);
+	        		}
+
+	        		//$('#shipping-processing-data').text("Shipping and Processing: "+newAmount);
+	        		$('#shipping-processing-data').text(newAmount == '0.00' ? 'FREE' : newAmount);
+	
+	    			var newTotalPriceAmount = parseFloat(parseFloat(amountTotalPrice)-parseFloat(amount)+parseFloat(newAmount)).toFixed(2);
+	    			newTotalPriceAmount = newTotalPriceAmount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	    			//$('#total-price-data').text("Total $"+newTotalPriceAmount);
+	    			$('#total-price-data').text("$"+newTotalPriceAmount);
+	    		}
+			}
+    	}catch(err){console.log(err)}
+	}
+	
+	return module;
+})(jQuery, (UPS || {}));
+
+jQuery( function (){
+	try{
+		if(UPS.checkoutShippingView){
+			UPS.loadEstimationForCheckoutShippingView();
+		}else if(UPS.checkoutConfirmationView){
+			UPS.loadEstimationForCheckoutConfirmationView();
+		}else{
+			UPS.loadUPSTracking();
+		}
+	}catch(err){console.log(err)};
+	
+	setTimeout(function(){ 
+		//$('#showPaymentMethodInfo').show();
+		$('#shipping-spinner').remove(); 
+	}, 5000);
+	
+})
+
+
+
+

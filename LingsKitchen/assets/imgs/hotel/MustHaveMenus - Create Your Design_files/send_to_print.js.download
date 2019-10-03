@@ -1,0 +1,1659 @@
+var LANDA = LANDA || {};
+
+LANDA.HandshakePage = function ( params ){
+
+	if ( this instanceof arguments.callee )
+	{
+		var handshakePage = this;
+        handshakePage.priceMatrix = JSON.parse(params.priceMatrix);
+        if(typeof(params.shippingPriceMatrix) != 'undefined' && params.shippingPriceMatrix != null){
+        	handshakePage.shippingPriceMatrix = JSON.parse(params.shippingPriceMatrix);
+        }else{
+        	handshakePage.shippingPriceMatrix = JSON.parse("{}");
+        }
+        if(typeof(params.shippingMhmCost) != 'undefined' && params.shippingMhmCost != null){
+        	handshakePage.shippingMhmCost = params.shippingMhmCost;
+        }else{
+        	handshakePage.shippingMhmCost = "";
+        }
+        handshakePage.skuMatrix = JSON.parse(params.skuMatrix);
+        handshakePage.defaultQuantityMatrix = JSON.parse(params.defaultQuantityMatrix);
+        handshakePage.defaultFacilityMatrix = JSON.parse(params.defaultFacilityMatrix);
+        handshakePage.discountCodeOrderAmount = params.discountCodeOrderAmount;
+        handshakePage.disableLaminationTwoPages = params.disableLaminationTwoPages;
+        handshakePage.canBeLaminated = params.canBeLaminated;
+        handshakePage.updateMenu = params.updateMenu;
+        if(typeof params.cartContents != 'undefined' ){
+        	try {
+        		handshakePage.cartContents = JSON.parse(params.cartContents);
+        	} catch (e) { 
+        		handshakePage.cartContents = {};
+        		console.log(e); 
+    		}
+        } else {
+        	handshakePage.cartContents = JSON.parse("{}");
+        }
+        handshakePage.menuPagesNo = params.menuPagesNo;
+        handshakePage.menuSize = params.menuSize;
+        handshakePage.showImages = true;
+        if(typeof(params.showImages) != 'undefined' && params.showImages != null)
+        	handshakePage.showImages = params.showImages;
+        handshakePage.hideLinesWhenOnlyOne = false;
+        if(typeof(params.hideLinesWhenOnlyOne) != 'undefined' && params.hideLinesWhenOnlyOne != null)
+        	handshakePage.hideLinesWhenOnlyOne = params.hideLinesWhenOnlyOne;
+        handshakePage.isInlineQuote = false;
+        if(typeof(params.isInlineQuote) != 'undefined' && params.isInlineQuote != null)
+        	handshakePage.isInlineQuote = params.isInlineQuote;
+        handshakePage.nextgenSize = null;
+        if(typeof(params.nextgenSize) != 'undefined' && params.nextgenSize != null)
+        	handshakePage.nextgenSize = params.nextgenSize;
+        handshakePage.isGenericQuote = null;
+        if(typeof(params.isGenericQuote) != 'undefined' && params.isGenericQuote != null)
+        	handshakePage.isGenericQuote = params.isGenericQuote;
+        handshakePage.isFremium = null;
+        if(typeof(params.isFremium) != 'undefined' && params.isFremium != null)
+        	handshakePage.isFremium = params.isFremium;
+        handshakePage.possiblePrintDiscount = 0;
+        if(typeof(params.possiblePrintDiscount) != 'undefined' && params.possiblePrintDiscount != null)
+        	handshakePage.possiblePrintDiscount = params.possiblePrintDiscount;
+        handshakePage.showPagePlaceholders = false;
+        if(typeof(params.showPagePlaceholders) != 'undefined' && params.showPagePlaceholders != null)
+        	handshakePage.showPagePlaceholders = params.showPagePlaceholders;
+	}
+};
+
+LANDA.HandshakePage.prototype = {
+
+	updateMenuDefaultAmount : '0',
+	emptyValueForPrintDiscount : '$0',
+    /** setup and setDefaultQuantity functions are use for inline quoting in MB2 at the moment, so they have no effect on the print quote page */
+	setup: function(params) {
+    	var handshakePage = this;
+        handshakePage.priceMatrix = JSON.parse(params.priceMatrix);
+        handshakePage.shippingPriceMatrix = JSON.parse(params.shippingPriceMatrix);
+        handshakePage.shippingMhmCost = JSON.parse(params.shippingMhmCost);
+        handshakePage.skuMatrix = JSON.parse(params.skuMatrix);
+        handshakePage.defaultQuantityMatrix = JSON.parse(params.defaultQuantityMatrix);
+        handshakePage.defaultFacilityMatrix = JSON.parse(params.defaultFacilityMatrix);
+        handshakePage.discountCodeOrderAmount = params.discountCodeOrderAmount;
+        handshakePage.disableLaminationTwoPages = params.disableLaminationTwoPages;
+        handshakePage.canBeLaminated = params.canBeLaminated;
+        handshakePage.updateMenu = params.updateMenu;
+        if(typeof params.cartContents != 'undefined' ){
+        	try {
+        		handshakePage.cartContents = JSON.parse(params.cartContents);
+        	} catch (e) {
+        		handshakePage.cartContents = {};
+        		console.log(e); 
+        	}
+        }else{
+        	handshakePage.cartContents = JSON.parse("{}");
+        }
+        handshakePage.menuPagesNo = params.menuPagesNo;
+        handshakePage.menuSize = params.menuSize;
+        handshakePage.showImages = true;
+        if(typeof(params.showImages) != 'undefined' && params.showImages != null)
+        	handshakePage.showImages = params.showImages;
+        handshakePage.hideLinesWhenOnlyOne = false;
+        if(typeof(params.hideLinesWhenOnlyOne) != 'undefined' && params.hideLinesWhenOnlyOne != null)
+        	handshakePage.hideLinesWhenOnlyOne = params.hideLinesWhenOnlyOne;
+        handshakePage.isInlineQuote = false;
+        if(typeof(params.isInlineQuote) != 'undefined' && params.isInlineQuote != null)
+        	handshakePage.isInlineQuote = params.isInlineQuote;
+        handshakePage.nextgenSize = null;
+        if(typeof(params.nextgenSize) != 'undefined' && params.nextgenSize != null)
+        	handshakePage.nextgenSize = params.nextgenSize;
+        handshakePage.isGenericQuote = null;
+        if(typeof(params.isGenericQuote) != 'undefined' && params.isGenericQuote != null)
+        	handshakePage.isGenericQuote = params.isGenericQuote;
+        handshakePage.isFremium = null;
+        if(typeof(params.isFremium) != 'undefined' && params.isFremium != null)
+        	handshakePage.isFremium = params.isFremium;
+        handshakePage.possiblePrintDiscount = 0;
+        if(typeof(params.possiblePrintDiscount) != 'undefined' && params.possiblePrintDiscount != null)
+        	handshakePage.possiblePrintDiscount = params.possiblePrintDiscount;
+        handshakePage.showPagePlaceholders = false;
+        if(typeof(params.showPagePlaceholders) != 'undefined' && params.showPagePlaceholders != null)
+        	handshakePage.showPagePlaceholders = params.showPagePlaceholders;
+	},	
+    setDefaultQuantity : function(){
+    	var handshakePage = this;
+    	// Quantity initial selection
+        var sideSelection = $('#selectSides option:selected').attr('value');
+        var numberOfSides;
+        switch (sideSelection) {
+            case "single":
+                numberOfSides = 1;
+                break;
+            case "tent": 	
+            	numberOfSides = 3; 
+            	break;
+            default:
+                numberOfSides = 2;
+                break;
+        }
+        var sku = handshakePage.getSku(numberOfSides);
+        var defaultQty = handshakePage.defaultQuantityMatrix[sku];
+        if (defaultQty != 0) {
+            $('#optQuantity option[value=' + defaultQty + ']').attr('selected', 'selected');
+            $('#optQuantity option[value=' + defaultQty + ']').prop('selected', true); 
+            $('#optQuantity').val(defaultQty.toString());
+            $('#optQuantity2 ul li').removeClass('selected');
+            $('#optQuantity2 ul li[data-value="' + defaultQty + '"]').addClass("selected");
+            $('#optQuantity2').children('span').html($('#optQuantity2 ul li[data-value="' + defaultQty + '"]').html());
+        }
+    },
+    setDefaultFacility : function(){
+    	var handshakePage = this;
+    	// Quantity initial selection
+        var sideSelection = $('#selectSides option:selected').attr('value');
+        var numberOfSides;
+        switch (sideSelection) {
+	        case "single": 	numberOfSides = 1; break;
+	        case "tent": 	numberOfSides = 3; break;
+            default:
+                numberOfSides = 2;
+                break;
+        }
+        var sku = handshakePage.getSku(numberOfSides);
+        var defaultFacility = handshakePage.defaultFacilityMatrix[sku];
+        $('#defaultFacility').attr('value', defaultFacility);
+    },
+    /** end inline quoting functions */
+    init: function() {
+        var handshakePage= this;
+        $('#papersSelect').change(function(){
+        	//the way $("#laminationSelect") is handled,with removing then adding the options thru changing the element html imposes a different approach on lamination laminationSelect options setup
+        	var thisVal = $(this).val();
+    		handshakePage.updateLaminationForSidesSelections(thisVal);
+        	handshakePage.updatePrintMenuSelections();
+            handshakePage.updateOrderSummary();
+            
+            if ($('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") > -1) {
+            	$('#what-is-synthetic').show();
+            } else {
+            	$('#what-is-synthetic').hide();
+            }
+        });
+        
+        $('#selectSides').change(function(){
+    		handshakePage.updateLaminationForSidesSelections();
+        	handshakePage.updatePrintMenuSelections();
+            handshakePage.updateOrderSummary();
+	        if(handshakePage.showImages){    
+	        	handshakePage.rearrangeThumbnails();
+	        }else {
+	        	if(handshakePage.showPagePlaceholders){    
+	        		handshakePage.rearrangePagePlaceholders();
+	        	}
+	        }
+	        handshakePage.setDefaultFacility();
+        });
+    
+        $('#laminationSelect').change(function(e){
+        	handshakePage.updatePrintMenuSelections();
+            handshakePage.updateOrderSummary();
+        });
+
+        $('#bleedsSelect').change(function(e){
+        	handshakePage.updatePrintMenuSelections();
+            handshakePage.updateOrderSummary();
+        });
+
+        $('#optQuantity').change(function(){
+        	$('.promo-per-qty').css('visibility', 'hidden');
+        	
+        	handshakePage.updatePrintMenuSelections();
+            handshakePage.updateOrderSummary();
+            handshakePage.togglePressProofLabel();
+            $('#giftCertStartNumber').keyup();
+            
+            try{
+            	if(typeof window.UPS.loadUPSTracking == 'function') {
+            		UPS.loadUPSTracking();
+            	}
+            }catch(err){}
+        });
+
+        $('#addToCartBtn').click(function(){
+            handshakePage.updateSubmitParams($('#orderSummary'));
+
+            // Remove the target=_blank before postback
+            $('form').removeAttr('target');
+        });
+
+        // $('#proofreadCheckbox').click(function(){
+        //     var button = $('#addToCartBtn');
+
+        //     if ($(this).is(':checked')) {
+        //         $(button).removeAttr('disabled');
+        //     } else {
+        //         $(button).attr('disabled', 'true');
+        //     }
+        // });
+        
+        $('#upgradeUserPlanPrintButton').click(function(){
+        	$("#upgradePlanModal").modal('show');
+        });
+
+        // Select the second quantity
+        $('#optQuantity option:eq(1)').attr('selected', 'selected');
+
+        var canChooseNumberOfSides = $('#canChooseNumberOfSides').attr('value');
+        var invalidTakeout = $('#invalidTakeout').attr('value');
+
+        // Sides selection title
+        
+        $('#single-selection-lbl').hide();
+        
+        if (canChooseNumberOfSides == "false" || $('#selectSides').children('option').length <= 1) {
+            $('#selectSides').hide();
+            var menuTypeKey = $('#skuKeyMenuType').attr('value');
+            if (menuTypeKey == "takeout") {
+                $('#selectSidesTitle').show().text('Takeout, Double Sided Print');
+            } else if (menuTypeKey == "giftcertificate") {
+                $('#selectSidesTitle').show().text('Gift Certificates with Envelopes');
+            } else if (menuTypeKey == "businesscards") {
+                if ($('#numberOfPages').attr('value') == 1) {
+                    $('#selectSidesTitle').show().text('Business Card - Single Sided');
+                } else {
+                    $('#selectSidesTitle').show().text('Business Card - Double Sided');
+                }
+            } else if (menuTypeKey == "loyaltycards") {
+                if ($('#numberOfPages').attr('value') == 1) {
+                    $('#selectSidesTitle').show().text('Loyalty Card - Single Sided');
+                } else {
+                    $('#selectSidesTitle').show().text('Loyalty Card - Double Sided');
+                }
+            } else if (menuTypeKey === 'tabletent') {
+            	$('#single-selection-lbl').show().html($('#selectSides').children(':first').html());
+            } else {
+                if ($('#numberOfPages').attr('value') == 1) {
+                    $('#selectSidesTitle').show().text('One Page Printed Single Sided');
+                } else {
+                    $('#selectSidesTitle').show().text('Two Pages Printed Double Sided');
+                }
+            }
+        } else {
+            $('#selectSides').show();
+            $('#selectSidesTitle').show();
+        }
+
+        var mType = $('#skuKeyMenuType').attr('value');
+        var mSize = $('#skuKeyMenuSize').attr('value');
+        var isFourBySix = (mType === "tabletent" && (typeof(mSize) !== 'undefined' && mSize === '4x6'));
+        
+        // Side option initial selection
+        // Default side selection
+        if ($('#selectSides option[value=double_front]').length != 0) {
+            $('#selectSides option[value=double_front]').attr('selected', 'selected');
+        } else if ($('#selectSides option[value=double]').length != 0) {
+            if(!handshakePage.isGenericQuote) {
+            	$('#selectSides option[value=double]').attr('selected', 'selected');
+            }
+        } else if ($('#selectSides option[value=single]').length != 0) {
+            //default to table tent for the table tent 4x6 when there is no option selected
+			if(isFourBySix && $('#selectSides option[value=tent]').length != 0){
+            	$('#selectSides option[value=tent]').attr('selected', 'selected');
+            }else{
+            	$('#selectSides option[value=single]').attr('selected', 'selected');
+            }
+        }
+        
+        if("true" === invalidTakeout){
+        	$('#selectSides').hide();
+        	
+        	if ($('#numberOfPages').attr('value') == 1) {
+                $('#selectSides option[value=double]').attr('selected', 'selected');
+            }
+        }else{
+	        // This is for the menus which the number sides is determined by the number of pages
+	        if (canChooseNumberOfSides == "false") {
+	            $('#selectSides').hide();
+	            if ($('#numberOfPages').attr('value') == 1 || menuTypeKey === "poster") {
+	                $('#selectSides option[value=double]').remove();
+	                $('#selectSides option[value=single]').attr('selected', 'selected');
+	            } else {
+	                $('#selectSides option[value=single]').remove();
+	                $('#selectSides option[value=double]').attr('selected', 'selected');
+	            }
+	        }
+        }
+
+        // Press Proof parameter (ignores default quantity value)
+        var pressProofParam = $('#pressProofParam').attr('value');
+        if (pressProofParam != -1) {
+            $('#optQuantity option[class=pressProof]').attr('selected', 'selected');
+        }
+        // Initial selections based on the shopping cart (overrides everything that came before)
+        var menuId = $('#menuGroupId').attr("value");
+        //solve issue where nexgen menu preferences are not loaded from the shopping cart
+    	if(!menuId || menuId == 'null' || menuId == '0'){
+    		menuId = $('#menuDocumentId').attr("value");
+    	}
+        if(handshakePage.isInlineQuote === true && typeof(menuId) == 'undefined' || menuId == null || menuId == '') {
+            menuId = $('#menuDocumentId').val();
+        }
+        if(!menuId || menuId == 'null' || menuId == '0'){
+            menuId = $('#designId').val();
+        }
+
+        var updatedFromCart = false;
+        if (handshakePage.cartContents.is_empty != "true" && typeof handshakePage.cartContents.menus != 'undefined') {
+            if (typeof handshakePage.cartContents.menus[menuId] != 'undefined') {
+                var optLam = handshakePage.cartContents.menus_optLam[menuId];
+                var optSides = typeof(urlSides) !== 'undefined' ? (urlSides || handshakePage.cartContents.menus_optSides[menuId]) 
+                												: handshakePage.cartContents.menus_optSides[menuId];
+                //var optQuantity = handshakePage.cartContents.menus_optQuantity[menuId];
+                //var optQuantity = handshakePage.cartContents.menus_optQtyNumeric[menuId];
+                
+                var optQuantity = typeof(urlQty) !== 'undefined' ? (urlQty || handshakePage.cartContents.menus_optQtyNumeric[menuId]) 
+                												 : handshakePage.cartContents.menus_optQtyNumeric[menuId];
+                var optBleeds = handshakePage.cartContents.menus_optBleeds[menuId];
+                var giftStartNumber = handshakePage.cartContents.menus_giftStartNumber[menuId];
+                
+                if (giftStartNumber != 'undefined' && giftStartNumber !== 0){
+                	$('#giftCertStartNumber').val(giftStartNumber);
+                }
+
+                $('#selectSides option:eq(' + optSides + ')').prop('selected', true);
+                $('#laminationSelect option:eq(' + optLam + ')').prop('selected', true);
+                //$('#laminationSelect option[value=' + (optLam === '1' ? 'yes' : 'no') + ']').prop('selected', true);
+                //console.log('z. ---------------------- lamination to ' + optLam);
+                $('#optQuantity option[value=' + optQuantity + ']').prop('selected', true);
+                $('#bleedsSelect option:eq(' + optBleeds + ')').prop('selected', true);
+                
+                DwrUtils.getPrintMenuPreferences(menuId, handshakePage.menuSize, handshakePage.menuPagesNo, function(response) {
+                	if(response){
+        				var responseJSON = JSON.parse(response);
+	                	if(responseJSON['paper'] && typeof(responseJSON['paper']) !== 'undefined') {
+	    					var optPaper = responseJSON['paper'];
+	    					$('#papersSelect option[value=' + optPaper + ']').prop('selected', true);
+	    					handshakePage.updateLaminationForSidesSelections();
+	    					handshakePage.updateOrderSummary();
+	    				}
+                	}
+                });
+
+                $('#addToCartBtn').attr('value', 'Update cart');
+
+                // $('#proofreadCheckbox').attr('checked', 'checked');
+                // $('#addToCartBtn').removeAttr('disabled');
+                updatedFromCart = true;
+                handshakePage.updateLaminationForSidesSelections();
+            }
+        }
+        
+        // Quantity initial selection
+        var sideSelection = $('#selectSides option:selected').attr('value');
+        var numberOfSides;
+        switch (sideSelection) {
+	        case "single":
+	            numberOfSides = 1;
+	            break;
+	        case "tent": 	
+	        	numberOfSides = 3; 
+	        	break;
+	        default:
+	            numberOfSides = 2;
+	            break;
+	    }
+        var sku = handshakePage.getSku(numberOfSides);
+        
+        if(!updatedFromCart){
+	        var defaultQty = handshakePage.defaultQuantityMatrix[sku];
+	        if (defaultQty != 0) {
+	        	$('#optQuantity').val('');
+	        	$('#optQuantity').find('option:selected').removeAttr('selected');
+	            $('#optQuantity option[value=' + defaultQty + ']').attr('selected', 'selected');
+	            $('#optQuantity option[value=' + defaultQty + ']').prop('selected', true);
+	            $('#optQuantity').val(defaultQty);
+	            
+	            $('#optQuantity').change();
+	            
+	            $('#optQuantity2 ul li').removeClass('selected');
+	            $('#optQuantity2 ul li[data-value="' + defaultQty + '"]').addClass("selected");
+	            $('#optQuantity2').children('span').html($('#optQuantity2 ul li[data-value="' + defaultQty + '"]').html());
+	        }
+	        
+	        var defaultSide = $('#selectSides').val();
+            if (defaultSide) {
+            	$('#selectSides2 ul li').removeClass('selected');
+            	$('#selectSides2 ul li[data-value="' + defaultSide + '"]').addClass("selected");
+	            $('#selectSides2').children('span').html($('#selectSides2 ul li[data-value="' + defaultSide + '"] label').html());
+            }
+        }
+        
+        handshakePage.togglePressProofLabel();
+
+        // Size display hacks
+        var menuTypeKey = $('#skuKeyMenuType').attr('value');
+        if (menuTypeKey == "tabletent") {
+            $('#orderSummary').find(".menuSize").text('5 x 7in')
+        } else if (menuTypeKey == "giftcertificate") {
+            $('#orderSummary').find(".menuSize").text('8.5 x 3.5in')
+        } else if (menuTypeKey == "commentcards") {
+            $('#orderSummary').find(".menuSize").text('3.5 x 8.5in')
+        }
+        
+        // Gift Certificate specific
+        var menuTypeKey = $('#skuKeyMenuType').attr('value');
+        if (menuTypeKey == "giftcertificate") {
+            $('#giftCertStartNumber').keydown(function(e){
+                if (e.keyCode == 13) { // disables Enter
+                    return false;
+                }
+            });
+            $('#giftCertStartNumber').keyup(function(e){
+                var startNumber = $(this).attr('value');
+                if (isNaN(startNumber) || startNumber == '' || parseInt(startNumber,10) == '0') {
+                    $('#giftCertEndNumberSpan').css('visibility','hidden');
+                    $('#giftCertEndNumber').text('');
+                    $('#finalGiftCertStartNumber').attr("value", 0);
+                } else {
+                    var selectedQuantity = $('#optQuantity option:selected').attr('value');
+                    var endNumber = parseInt(startNumber) + parseInt(selectedQuantity) - 1;
+                    $('#giftCertEndNumber').text(endNumber);
+                    $('#finalGiftCertStartNumber').attr("value", startNumber);
+                    $('#giftCertEndNumberSpan').show();
+                }
+            });
+        }
+        $('#giftCertStartNumber').keyup();
+        
+        var defaultFacility = handshakePage.defaultFacilityMatrix[sku];
+        $('#defaultFacility').attr('value', defaultFacility);
+        
+        if(handshakePage.showImages){    
+        	handshakePage.rearrangeThumbnails();
+        }else {
+        	if(handshakePage.showPagePlaceholders){    
+        		handshakePage.rearrangePagePlaceholders();
+        	}
+        }
+        
+        $('#selectSides2').children('span').html($('#selectSides2 ul li.selected label').html());
+        
+        if ($('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") > -1) {
+        	$('#what-is-synthetic').show();
+        } else {
+        	$('#what-is-synthetic').hide();
+        }
+        
+        handshakePage.updateOrderSummary();
+    },
+    
+    setFromPreviousMenuSelection: function() {
+    	var handshakePage= this;
+    	var menuId = $('#menuGroupId').attr("value");
+    	if(!menuId || menuId == 'null' || menuId == '0'){
+    		menuId = $('#menuDocumentId').attr("value");
+    	}
+    	var setFromPreviousSelectionCallback = 
+    		function(response) {
+    			if(response){
+    				var responseJSON = JSON.parse(response);
+    	            
+    				//always recommend the table tent formatted menu for table tents 4x6;
+    				if(typeof(responseJSON['menuSize']) !== 'undefined' && responseJSON['menuSize'] === '4x6'){
+    	            	responseJSON['sides'] = 'tent';
+    	            }
+    				var rLam = (responseJSON["lamination"] == '1' ? 'yes' : 'no');
+    				var optLam = typeof(urlLamination) !== 'undefined' ? (urlLamination || rLam) : rLam;
+    	            if(optLam === ''){
+    	            	optLam = 'no'
+    	            }
+    				var optSides = typeof(urlSides) !== 'undefined' ? (urlSides || responseJSON["sides"]) : responseJSON["sides"];
+    	            
+    	            var rQty = (responseJSON["quantity"] ? parseInt(responseJSON["quantity"]) : -1);
+    				var optQuantity = typeof(urlQty) !== 'undefined' ? (urlQty || rQty) : rQty;
+    	            
+    				var optBleeds = (responseJSON["bleeds"] == '1' ? 'yes' : 'no');
+    				
+    				if(responseJSON['lastPrintOrderDate'] && typeof(responseJSON['lastPrintOrderDate']) !== 'undefined'){
+    					$('#lastPrintOrderDateDiv').show();
+    					$('#lastPrintOrderDate').text(responseJSON['lastPrintOrderDate']);
+    				} else {
+    					$('#lastPrintOrderDateDiv').hide();
+    					$('#lastPrintOrderDate').text('');
+    				}
+
+    				if(responseJSON['paper'] && typeof(responseJSON['paper']) !== 'undefined') {
+    					var optPaper = responseJSON['paper'];
+    					$('#papersSelect option[value=' + optPaper + ']').prop('selected', true);
+    				}
+    				
+    	            $('#selectSides option[value=' + optSides + ']').prop('selected', true);
+    	            $('#laminationSelect option[value=' + optLam + ']').prop('selected', true);
+    	            $('#optQuantity option[value=' + optQuantity + ']').prop('selected', true);
+    	            $('#bleedsSelect option[value=' + optBleeds + ']').prop('selected', true);
+    	            
+    	            $('#optQuantity2 ul li').removeClass('selected');
+    	            $('#optQuantity2 ul li[data-value="' + optQuantity + '"]').addClass("selected");
+    	            $('#optQuantity2').children('span').html($('#optQuantity2 ul li[data-value="' + optQuantity + '"]').html());
+    	            
+    	            if (optSides) {
+    	            	$('#selectSides2 ul li').removeClass('selected');
+    	            	$('#selectSides2 ul li[data-value="' + optSides + '"]').addClass("selected");
+        	            $('#selectSides2').children('span').html($('#selectSides2 ul li[data-value="' + optSides + '"] label').html());
+    	            }
+    	            
+    	            handshakePage.updateLaminationForSidesSelections();
+    	            
+    	            handshakePage.togglePressProofLabel();
+    	            if(handshakePage.showImages){    
+    		        	handshakePage.rearrangeThumbnails();
+    		        }else {
+    		        	if(handshakePage.showPagePlaceholders){    
+    		        		handshakePage.rearrangePagePlaceholders();
+    		        	}
+    		        }
+    	            handshakePage.updateOrderSummary();
+    	            handshakePage.setDefaultFacility();
+    			}
+            } 
+    	DwrUtils.getPrintMenuPreferences(menuId, handshakePage.menuSize, handshakePage.menuPagesNo, setFromPreviousSelectionCallback);
+    },
+    
+    updatePrintMenuSelections: function() {
+    	var handshakePage= this;
+    	var menuId = $('#menuGroupId').attr("value");
+    	if(!menuId || menuId == 'null' || menuId == '0'){
+    		menuId = $('#menuDocumentId').attr("value");
+    	}
+    	var sides = $('#selectSides').val();
+    	var lamination = 0;
+    	try{
+    		lamination = ($('#laminationSelect').val() == 'yes' ? 1 : 0);
+    	}catch(err){}
+    	var bleeds = 0;
+    	try{
+    		bleeds = ($('#bleedsSelect').val() == 'yes' ? 1 : 0);
+    	}catch(err){}
+    	var quantity = 0;
+    	try{
+    		quantity = parseInt($('#optQuantity').val());
+    	}catch(err){}
+    	var paper = '';
+    	try{
+    		paper = $('#papersSelect').val();
+    	}catch(err){}
+    	var updatePrintMenuSelectionsCallback = 
+    		function(response) {
+    			if(response){
+    				console.log("updatePrintMenuSelections response:" + response);
+    			}
+            } 
+    	
+    	DwrUtils.updatePrintMenuPreferences(menuId, sides, lamination, bleeds, handshakePage.menuSize, handshakePage.menuPagesNo, quantity, paper, updatePrintMenuSelectionsCallback);
+    },
+    
+    updateLaminationForSidesSelections: function(papersSelectVal) {
+    	var handshakePage = this;
+    	papersSelectVal = ((typeof papersSelectVal != 'undefined') ? papersSelectVal : '');
+    	// Hide lamination for table tent option
+//    	if ('tent' === $('#selectSides').val() || ($('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") > -1)) {
+    	if ('tent' === $('#selectSides').val()) {
+    		$('#laminationPanel').hide();
+    		updatePaperOptions(false);
+    		$('#laminationSelect').val('n/a');
+    	} else {
+    		var $lamPanel = $('#laminationPanel');
+    		if ( ! $lamPanel.is(':visible') && $lamPanel.find('option').length > 0) {
+    			$('#laminationPanel').show();
+    			updatePaperOptions(true);
+    			
+    			if(handshakePage.menuSize === '4x6' && $("#laminationSelect").val() === null){
+    				 $('#laminationSelect option:eq(0)').prop('selected', true);	
+    			}
+    		}
+    	}
+    		
+    	var $laminationSelect = $("#laminationSelect").val();
+    	if(papersSelectVal == 'laminated-cardstock') $laminationSelect = 'yes';
+    	if($laminationSelect != null &&  $laminationSelect != ''){
+    		$('#lastSelectedSide').text($laminationSelect);
+    	}
+    	
+//    	if (typeof(handshakePage.canBeLaminated) != 'undefined' && handshakePage.canBeLaminated === true && 
+//    		(!$('#papersSelect').val() || ($('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") == -1))) {
+    	if (typeof(handshakePage.canBeLaminated) != 'undefined' && handshakePage.canBeLaminated === true) {
+    		
+    		var $selectedSidesOptionToCheck = $("#selectSides").val();
+    		
+        	var showLaminationTwoPages = true;
+        	if(!handshakePage.isGenericQuote){
+	        	if ($('#numberOfPages').attr('value') != 1) {
+		        	if($selectedSidesOptionToCheck === 'single'){
+		    			showLaminationTwoPages = false;
+		    		} else if ($selectedSidesOptionToCheck.indexOf('double') > -1 && $('#numberOfPages').attr('value') > 2){
+		    			showLaminationTwoPages = false;
+		    		}
+	        	}
+        	}
+        	
+        	if($selectedSidesOptionToCheck === 'tent'){
+    			showLaminationTwoPages = false;
+    		}
+        	
+        	if(showLaminationTwoPages === true && (!$('#papersSelect').val() || ($('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") == -1))){
+        		$('#laminationPanel').show();
+        		$('#paperPanel').show();
+        		updatePaperOptions(true);
+
+    	    	$('#laminationSelect').find('option').remove();
+    	    	$('#laminationSelect').append('<option value="no" name="laminationNo" selected="selected">No</option>');
+    	    	$('#laminationSelect').append('<option value="yes" name="laminationYes">Yes</option>');
+    	    	
+    	    	var $lastSelectedSide = $("#lastSelectedSide").text();
+    	    	if($lastSelectedSide != null &&  $lastSelectedSide != ''){
+    	    		$("#laminationSelect").val($lastSelectedSide);
+    	    		if ($lastSelectedSide === 'yes') {
+    	    			if(papersSelectVal != ''){
+    	    				$('#papersSelect').val(papersSelectVal);
+    	    			}else{
+    	    				$('#papersSelect').val('glossy-cardstock');
+    	    			}
+    	    			updatePaperOptions(true);
+    	    		}
+    	    	}
+    	    	console.log('b. ---------------------- lamination to ' + $lastSelectedSide);
+	            
+        	}else{
+        		$('#laminationPanel').hide();
+        		
+        		updatePaperOptions(true);
+        		
+        		if((!handshakePage.isGenericQuote && $('#numberOfPages').attr('value') != 1 && $("#selectSides").val() === 'single') || 
+        		   ('tent' === $('#selectSides').val()) ||
+        		   ($('#numberOfPages').attr('value') > 2)) {
+    	        	updatePaperOptions(false);
+    	        	
+    	        	if ($('#papersSelect').val() == 'laminated-cardstock') { 
+    	        		$('#papersSelect').val('glossy-cardstock');
+    	        		$('#papersSelect option[value=glossy-cardstock]').attr('selected', 'selected');
+    	        		$('#papersSelect2 ul li[data-value="glossy-cardstock"]').addClass('selected');
+    	        	}
+            	}
+
+    	    	$('#laminationSelect').find('option').remove();
+        	}
+    	}
+    	
+    	if ($('#papersSelect2').length && $('#papersSelect2 ul li').size() <= 1) {
+    		$('#paperPanel').hide();
+    		$('#papersSelect').val('glossy-cardstock');
+    		$('#papersSelect option[value=glossy-cardstock]').attr('selected', 'selected');
+    	} else {
+    		
+    		if ($('#canChoosePaper').val() == 'true') {
+    			$('#paperPanel').show();
+    		}
+    	}
+    },
+    
+    togglePressProofLabel: function() {
+        var selectedQty = $('#optQuantity').find('option:selected');
+        if ($(selectedQty).hasClass('pressProof')) {
+            $('#pressProofLabel').show();
+        } else {
+            $('#pressProofLabel').hide();
+        }
+    },
+
+    // This will update all the dynamic parts of the order summary
+    // e.g. Sides choice, lamination choice, etc
+    updateOrderSummary: function(){
+        var handshakePage= this;
+
+        var summary = $('#orderSummary');
+
+        $('#giftCertStartNumber').blur();
+
+        var thumbnailsDisplay = $('#thumbnailsDisplay');
+        var numberOfPages = $('#numberOfPages').attr('value');
+
+        var lineItems = $('#summaryLineItems');
+        $(lineItems).html('');
+
+        var sideSelection = $('#selectSides option:selected').attr('value');
+        switch (sideSelection) {
+            case "single":
+            	var numberOfPagesForComputing = numberOfPages;
+            	/** For generic quotes only use the sides selection for checking the single or double sided prices. 
+            	  * In order to have double sided prices the menu need to have 2 pages but for single side we will calculate only for one page.
+            	  */
+//            	if(handshakePage.isGenericQuote)
+//            		numberOfPagesForComputing = 1;
+
+            	for(var i = 1; i <= numberOfPagesForComputing; i++){
+                    lineItems.append(handshakePage.getLineItemMarkup(i, 1));
+                }
+                
+            	break;
+            case "double":
+                for(var i = 1; i <= numberOfPages; i = i + 2){
+                    lineItems.append(handshakePage.getLineItemMarkup(i, 2));
+                }
+                break;
+            case "double_frontAndBack":
+                // the front
+                lineItems.append(handshakePage.getLineItemMarkup(1, 1));
+
+                // the internal pages
+                if (numberOfPages == 1) {
+                    break;
+                }
+                for(var i = 2; i <= numberOfPages-1; i = i + 2){
+                    lineItems.append(handshakePage.getLineItemMarkup(i, 2));
+                }
+
+                // the back
+                lineItems.append(handshakePage.getLineItemMarkup(numberOfPages, 1));
+                break;
+            case "double_front":
+                // the front
+                lineItems.append(handshakePage.getLineItemMarkup(1, 1));
+
+                // the internal pages
+                if (numberOfPages == 1) {
+                    break;
+                }
+                for(var i = 2; i <= numberOfPages-1; i = i + 2){
+                    lineItems.append(handshakePage.getLineItemMarkup(i, 2));
+                }
+                break;
+            case "double_back":
+                for(var i = 1; i <= numberOfPages-1; i = i + 2){
+                    lineItems.append(handshakePage.getLineItemMarkup(i, 2));
+                }
+
+                // the back
+                lineItems.append(handshakePage.getLineItemMarkup(numberOfPages, 1));
+                break;
+        }
+        
+        if (sideSelection === 'tent') {
+        	lineItems.append(handshakePage.getLineItemMarkup(1, 3));
+        }
+                
+        try{
+		    var lineItems = $('#summaryLineItems').find('tr');
+		    if(lineItems.length > 1)
+		    	$('#summaryLineItems').show();
+		    else
+		    	$('#summaryLineItems').hide();
+	    }catch(err){
+	    	console.log(err.stack);
+	    } 
+	    
+    	switch (sideSelection) {
+	        case "single": 	numberOfSides = 1; break;
+	        case "tent": 	numberOfSides = 3; break;
+            default:
+                numberOfSides = 2;
+                break;
+    	}
+	    
+	    possibleQuantities = $($('#optQuantity2 ul li'));
+	    
+	    var summaryLineItems = $('#summaryLineItems tr.lineItem');
+	    
+	    for (var i = 0; i < possibleQuantities.length; i++){
+	    	var price = 0;
+	    	var quantity = $(possibleQuantities[i]).data('value');
+	    	
+	        $(summaryLineItems).each(function(index){
+	            var sku = $(this).attr('data-sku');
+		    	price += handshakePage.priceMatrix[sku][quantity];
+	        });
+	    	
+	        $(possibleQuantities[i]).find('label').text(price.toFixed(2));
+	    }
+	    
+        var qty = $('#optQuantity').val();
+        $('#optQuantity2 ul li').removeClass('selected');
+        $('#optQuantity2 ul li[data-value="' + qty + '"]').addClass("selected");
+        $('#optQuantity2').children('span').html($('#optQuantity2 ul li[data-value="' + qty + '"]').html());
+	    
+	    $('#selectSides2').children('span').html($('#selectSides2 ul li.selected label').html());
+	    
+        // Pricing
+        handshakePage.updateTotal();
+        
+	    if(handshakePage.isGenericQuote && handshakePage.isFremium){
+	    	try{
+	    		//this is the total without discount when showing the value to fremiums.
+	    		var totalWithoutDiscount = parseFloat($('#subTotalLabel').text());
+	    		var printDiscount = parseInt(handshakePage.possiblePrintDiscount);
+	    		var totalWithDiscount = totalWithoutDiscount - (totalWithoutDiscount / 100 * printDiscount).toFixed(2);
+	    		$('#subTotalForFremiums').text(totalWithDiscount.toFixed(2));
+			}catch(err){
+	    		console.log(err.stack);
+	    	}
+	    }
+	    
+	    // what is Synthetic
+        if ($('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") > -1) {
+        	$('#what-is-synthetic').show();
+        } else {
+        	$('#what-is-synthetic').hide();
+        }
+    },
+
+    updateSubmitParams: function(summary){
+        var handshakePage = this;
+
+        // Set the quantity ordered
+        var selectedQuantity = $('#optQuantity option:selected').attr('value');
+        $('#quantityOrdered').attr('value', selectedQuantity);
+
+        // Set the SKU array and the page config array
+        var skuArray = new Array();
+        var pageConfigArray = new Array();
+        
+        var i = 0;
+
+        var summaryLineItems = $('#summaryLineItems tr.lineItem');
+        $(summaryLineItems).each(function(index){
+            var sku = $(this).attr('data-sku');
+            skuArray[i] = sku;
+            var pages = $(this).attr('data-pages');
+            pageConfigArray[i] = pages;
+            i++;
+        });
+        $('#skus').attr('value', skuArray);
+        $('#pagesConfig').attr('value', pageConfigArray);
+
+        var bleedsChosen = $('#bleedsSelect option:selected').attr('value');
+        $('#bleedsChosen').attr('value', bleedsChosen);
+        if (bleedsChosen == "true") {
+            $('#bleedEnabledPages').attr('value', $('#possibleBleeds').attr('value'));
+        } else {
+            $('#bleedEnabledPages').attr('value', '');
+        }
+
+        var selectedQuantityIndex = $('#optQuantity option:selected').index();
+        var selectedSidesIndex = $('#selectSides option:selected').index();
+        var selectedLamIndex = $('#laminationSelect option:selected').index();
+        var selectedBleedsIndex = $('#bleedsSelect option:selected').index();
+        
+        if ($('#selectSides').val() === 'tent' || ($('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") > -1) ) {
+        	selectedLamIndex = -1;
+        }
+        //There are times when #laminationSelect is not in sync with #papersSelect. For that reason try to resynch here
+        if(typeof $('#papersSelect').val() != 'undefined' && $('#papersSelect').val() == 'laminated-cardstock'){
+        	selectedLamIndex = 1;
+        }
+        $('#optQuantityIndex').attr('value', selectedQuantityIndex);
+        $('#optSidesIndex').attr('value', selectedSidesIndex);
+        $('#optLamIndex').attr('value', selectedLamIndex);
+        $('#optBleedsIndex').attr('value', selectedBleedsIndex);
+    },
+
+    getLineItemPrice: function(numberOfSides){
+        var handshakePage = this;
+        
+        var quantity = $('#optQuantity option:selected').attr('value');
+        var sku = handshakePage.getSku(numberOfSides);
+        var price = handshakePage.priceMatrix[sku][quantity];
+
+        return price;
+    },
+    
+    getShippingPrice: function(numberOfSides){
+        var handshakePage = this;
+        try{
+        	var quantity = $('#optQuantity option:selected').attr('value');
+        	var sku = handshakePage.getSku(numberOfSides);
+	        var shippingPrice = handshakePage.shippingPriceMatrix[sku][quantity];
+	        var shippingMhmCost = handshakePage.shippingMhmCost;
+	        
+	        var itemsNr = '1';
+	        try{
+	        	itemsNr = $('#summaryLineItems').find('tr').length;
+	        }catch(err){
+		    	console.log(err.stack);
+		    } 	
+	        
+	        var savePercent = "0";
+	        var discounts = shippingMhmCost.split(",");
+	        
+	        for (i = 0; i < discounts.length; i++) {
+	        	var productsValue = discounts[i].split(":"); 
+	        	
+	        	if(  discounts[i].startsWith("<") ||  discounts[i].startsWith(">")){
+	                var signAndItemsCount = productsValue[0];
+	                var sign = signAndItemsCount.substring(0,1);
+	                var itemsCount = signAndItemsCount.substring(1);
+
+	                var limit = productsValue[1];
+
+	                if("<" === sign && itemsNr < parseInt(itemsCount)){
+	                    if("".equals(savePercent) || (parseInt(savePercent) < parseInt(limit))){
+	                        savePercent = limit;
+	                    }
+	                }else{
+	                    if(itemsNr > parseInt(itemsCount)){
+	                        if("" === savePercent || (parseInt(savePercent) < parseInt(limit))){
+	                            savePercent = limit;
+	                        }
+	                    }
+	                }
+	            }else{
+	                var itemsCount = productsValue[0];
+	                var limit = productsValue[1];
+
+	                if(itemsNr == parseInt(itemsCount)){
+	                    savePercent = limit;
+	                }
+	            } 
+	        }
+	        
+	        var itemsShippingPrice = shippingPrice * itemsNr;
+	        shippingPrice = itemsShippingPrice - ( itemsShippingPrice * parseInt(savePercent) )/100;
+	        
+	    }catch(err){
+	    	console.log(err.stack);
+	    }
+        
+        return shippingPrice;
+    },
+
+    // This will handle the thumbnails arrangement according to the user selection
+    rearrangeThumbnails: function() {
+        var handshakePage = this;
+        
+        var sideSelection = $('#selectSides option:selected').attr('value');
+        var thumbnailsUrls = $('.hiddenThumbnailUrl');
+        var thumbsContainer = $('#thumbnails');
+
+        // Erase everything in the container
+        $(thumbsContainer).html('');
+
+        var pageCount = $(thumbnailsUrls).length;
+
+        // for all the cases the behavior is the same: create the appropriate <img> elements and then fill them with the
+        // thumbs URLs, leaving the ones missing with a empty placeholder (and displaying the appropriate error msg)
+        switch (sideSelection) {
+            case "single":
+                for(var i = 1; i <= pageCount; i++){
+                    thumbsContainer.append(handshakePage.getSingleThumbPlaceholder());
+                }
+                break;
+            case "double":
+            	if((handshakePage.nextgenSize != null && handshakePage.nextgenSize.indexOf('takeout') > -1)){
+            		thumbsContainer.append(handshakePage.getTakeoutPlaceholder());
+                } else if ($('#skuKeyMenuType').attr('value').indexOf('takeout') > -1) {
+                	thumbsContainer.append(handshakePage.getUploadedTakeoutPlaceholder());
+        		} else {
+                	for(var i = 1; i <= pageCount; i = i + 2){
+                        thumbsContainer.append(handshakePage.getDoubleThumbPlaceholder());
+                    }
+                }
+                break;
+            case "double_frontAndBack":
+                // the front
+                thumbsContainer.append(handshakePage.getSingleThumbPlaceholder());
+
+                // the internal pages
+                if (pageCount == 1) {
+                    break;
+                }
+                for(var i = 2; i <= pageCount-1; i = i + 2){
+                    thumbsContainer.append(handshakePage.getDoubleThumbPlaceholder());
+                }
+
+                // the back
+                thumbsContainer.append(handshakePage.getSingleThumbPlaceholder());
+                break;
+            case "double_front":
+                // the front
+                thumbsContainer.append(handshakePage.getSingleThumbPlaceholder());
+
+                // the internal pages
+                for(var i = 2; i <= pageCount-1; i = i + 2){
+                    thumbsContainer.append(handshakePage.getDoubleThumbPlaceholder());
+                }
+                break;
+            case "double_back":
+                // the double-sided pages
+                for(var i = 1; i <= pageCount-1; i = i + 2){
+                    thumbsContainer.append(handshakePage.getDoubleThumbPlaceholder());
+                }
+
+                //the back
+                thumbsContainer.append(handshakePage.getSingleThumbPlaceholder());
+                break;
+            case "tent": 
+        		thumbsContainer.append(handshakePage.getTableTentPlaceholder());
+            	break;
+        }
+
+        // Now populate the actual thumbnails
+        var firstPageImg = $($(thumbsContainer).find('li img')[0]);
+
+        $(thumbsContainer).find('li img').each(function(index){
+            if (typeof thumbnailsUrls[index] == 'undefined') {
+                $(this).css('width', firstPageImg.width());
+                $(this).css('height', firstPageImg.height());
+            } else {
+            	var url = $(thumbnailsUrls[index]).attr('value');
+            	if (sideSelection == 'tent') {
+            		url += '&page-size=table%20tent%204x6';
+            	}
+            	
+            	if(handshakePage.nextgenSize != null && handshakePage.nextgenSize.indexOf('takeout') > -1){
+            		url += '&page-size=' + handshakePage.nextgenSize;
+            		url = url.replace('page=1', 'page=2');
+                }
+            	
+                $(this).attr('src', url);
+            }
+        });
+    },
+    
+    // This will handle the thumbnails arrangement according to the user selection
+    rearrangePagePlaceholders: function() {
+        var handshakePage = this;
+        
+        var sideSelection = $('#selectSides option:selected').attr('value');
+        var thumbnailsUrls = $('.hiddenThumbnailUrl');
+        var thumbsContainer = $('#thumbnails');
+
+        // Erase everything in the container
+        thumbsContainer.html('');
+        thumbsContainer.removeClass('pc-takeout');
+        if(handshakePage.nextgenSize != null && handshakePage.nextgenSize.indexOf('takeout') > -1){
+        	thumbsContainer.addClass('pc-takeout');
+        } 
+        thumbsContainer.removeClass('pc-landscape');
+        if(handshakePage.nextgenSize != null && handshakePage.nextgenSize.indexOf('landscape') > -1){
+        	thumbsContainer.addClass('pc-landscape');
+        } 
+        
+        var pageCount = handshakePage.menuPagesNo;
+
+        // for all the cases the behavior is the same: create the appropriate <img> elements and then fill them with the
+        // thumbs URLs, leaving the ones missing with a empty placeholder (and displaying the appropriate error msg)
+        switch (sideSelection) {
+            case "single":
+                for(var i = 1; i <= pageCount; i++){
+                	handshakePage.addPagePlaceholder('single-page', thumbsContainer, false, i);
+                	if(i === 3 && pageCount > 3){
+                		handshakePage.addPagePlaceholder('more-pages', thumbsContainer, false, '...');
+                        break;
+                    }
+                }
+                break;
+            case "double":
+                for(var i = 1; i <= pageCount; i = i + 2){
+                	handshakePage.addPagePlaceholder('double-page', thumbsContainer, false, (i + '-' + (i+1)));
+                	if(i === 3 && pageCount > 4){
+                		handshakePage.addPagePlaceholder('more-pages', thumbsContainer, false, '...');
+                        break;
+                    }
+                }
+                break;
+            case "double_frontAndBack":
+                // the front
+            	handshakePage.addPagePlaceholder('front-cover', thumbsContainer, false, 'fc');
+            	
+            	// the internal pages
+                if (pageCount == 1) {
+                    break;
+                }
+                for(var i = 2; i <= pageCount-1; i = i + 2){
+                	handshakePage.addPagePlaceholder('double-page', thumbsContainer, false, (i + '-' + (i+1)));
+                	if(i === 2 && pageCount > 4){
+                		handshakePage.addPagePlaceholder('more-pages', thumbsContainer, false, '...');
+                        break;
+                    }
+                }
+
+                // the back
+                handshakePage.addPagePlaceholder('back-cover', thumbsContainer, false, 'bc');
+            	break;
+            case "double_front":
+                // the front
+            	handshakePage.addPagePlaceholder('front-cover', thumbsContainer, false, 'fc');
+
+                // the internal pages
+                for(var i = 2; i <= pageCount-1; i = i + 2){
+                	handshakePage.addPagePlaceholder('double-page', thumbsContainer, false, (i + '-' + (i+1)));
+                	if(i === 4 && pageCount > 5){
+                		handshakePage.addPagePlaceholder('more-pages', thumbsContainer, false, '...');
+                        break;
+                    }
+                }
+                break;
+            case "double_back":
+                // the double-sided pages
+                for(var i = 1; i <= pageCount-1; i = i + 2){
+                	handshakePage.addPagePlaceholder('double-page', thumbsContainer, false, (i + '-' + (i+1)));
+                	if(i === 3 && pageCount > 5){
+                		handshakePage.addPagePlaceholder('more-pages', thumbsContainer, false, '...');
+                        break;
+                    }
+                }
+
+                //the back
+                handshakePage.addPagePlaceholder('back-cover', thumbsContainer, false, 'bc');
+                break;
+            case 'tent':
+        		handshakePage.addPagePlaceholder('table-tent', thumbsContainer, false, '');
+            	break;
+        }
+        
+    },
+    addPagePlaceholder : function(type, container, showText, text){
+    	showText = true;
+		$li = $('<li/>');
+        if(showText === true){
+        	$li.text(text);
+        }
+        $li.addClass('pc-' + type);
+        container.append($li);
+    },
+    updateTotal: function() {
+        var handshakePage = this;
+
+        var lineItemsPrices = $('.lineItemPrice');
+
+        var subTotal = 0;
+        $(lineItemsPrices).each(function(index){
+            subTotal += parseFloat($(this).text());
+        });
+        
+        // Update the label
+        $('#subTotalLabel').text(subTotal.toFixed(2));
+        $('#subTotalInput').val(subTotal.toFixed(2)).trigger('change');;
+        var discount = parseFloat($('#discountLabel').text());
+        var discountValue = 0;
+        if(discount > 0) {
+        	handshakePage.setTotalsWithDiscount(discount, 2, subTotal);
+        	handshakePage.checkDiscountAmount(subTotal);
+        }else{
+            $('#discountValueLabel').text(discountValue);
+            $('#subTotalWithDiscountLabel').text('$' + (subTotal - discountValue).toFixed(2));
+            $('#subTotalWithDiscountLabel').show();
+            $('.print-discount-panel').show();
+            handshakePage.updateShippingPriceTotal(subTotal);
+        }
+        
+        handshakePage.checkPrintDiscountModule(subTotal);
+        handshakePage.updateShippingPriceTotal(subTotal);
+    },
+    
+    updateShippingPriceTotal: function(subTotal){
+    	var handshakePage = this;
+    	
+    	if(!handshakePage.isGenericQuote){
+	    	if (handshakePage.cartContents.is_empty === "true") {
+	        	var sideSelection = $('#selectSides option:selected').attr('value');
+	        	switch (sideSelection) {
+			        case "single": 	numberOfSides = 1; break;
+			        case "tent": 	numberOfSides = 3; break;
+		            default:
+		                numberOfSides = 2;
+		                break;
+	        	}
+	        	
+		        var shippingPrice = handshakePage.getShippingPrice(numberOfSides);
+		        var $stateCodeValue = $('#stateCodeValue').text();
+		        
+		        if($stateCodeValue != undefined && ( $stateCodeValue === "ak" || $stateCodeValue === "hi" )){
+		        	shippingPrice = (parseFloat(shippingPrice) * 2).toFixed(2);
+	            }
+		        
+		        var $spanPriceWithShipping = $('#subTotalWithShippingLabel');
+		        var $spanPriceWithShippingPannel = $('#subtotal-shipping-price-panel');
+		        
+		        var subTotalPrice = (parseFloat(shippingPrice) + parseFloat(subTotal));
+		        if(!handshakePage.isFremium){
+		        	subTotalPrice = (subTotalPrice - parseFloat($('#discountValueLabel').text()));
+		        	$('.print-discount-panel').show();
+		        }
+		        
+		        $spanPriceWithShipping.text('$' + subTotalPrice.toFixed(2));
+		        
+		        var $zipCodeShippingPrice = $('#zipCodeShippingPrice');
+		        $zipCodeShippingPrice.text('$' + parseFloat(shippingPrice).toFixed(2));
+		        
+		        $spanPriceWithShippingPannel.show();
+
+		        $('#subTotalWithShippingLabel').show();
+		        $('#subTotalWithDiscountLabel').hide();
+	        }else{
+	        	$('#zip-shipping-price-panel').hide();
+	        	$('#subTotalWithShippingLabel').hide();
+	        }
+    	}
+    },
+    
+    checkPrintDiscountModule: function(subTotal){
+    	var handshakePage = this;
+    	
+    	var discountCodeOrderAmount = handshakePage.discountCodeOrderAmount;
+    	var updateMenu = handshakePage.updateMenu;
+    	
+    	if(updateMenu && handshakePage.updateMenuDefaultAmount === '0'){
+    		handshakePage.updateMenuDefaultAmount = subTotal;
+    	}
+    	
+    	if(discountCodeOrderAmount !== '0'){
+    		var cartInfo = handshakePage.cartContents;
+			var cartTotalWithoutDiscount = handshakePage.emptyValueForPrintDiscount;
+			
+			if (cartInfo != null && cartInfo.is_empty != "true") {
+				cartTotalWithoutDiscount = cartInfo.total_without_discount;
+			}
+			
+			if(cartTotalWithoutDiscount && cartTotalWithoutDiscount != ''){
+				var cartTotal = cartTotalWithoutDiscount.substring(1, cartTotalWithoutDiscount.length);
+				cartTotal = parseInt(cartTotal) - parseInt(handshakePage.updateMenuDefaultAmount);
+				
+				if( ( parseInt(cartTotal) >= parseInt(discountCodeOrderAmount) ) || 
+						( ( parseInt(cartTotal) + parseInt(subTotal) ) >= parseInt(discountCodeOrderAmount) ) ){
+					
+					var promotionalDiscount = $('#promotionalDiscountValue').text();
+			        handshakePage.setPromotionalDiscount(promotionalDiscount, 2, subTotal);
+			        
+					jQuery('#discountPrintMessage').hide();
+					jQuery('#totalDiscountPrintMessage').show();
+				}else{
+					handshakePage.setPromotionalDiscount(handshakePage.emptyValueForPrintDiscount, 2, subTotal);
+					
+					jQuery('#totalDiscountPrintMessage').hide();
+					jQuery('#discountPrintMessage').show();
+				}
+			}else{
+				jQuery('#totalDiscountPrintMessage').hide();
+				jQuery('#discountPrintMessage').show();
+			}
+    	}
+    },
+    
+    checkDiscountAmount: function(amount){
+    	if(amount !== undefined && amount >= 40){
+    		$("#saveMemberDiscountInfo").show();
+    	}else{
+    		$("#saveMemberDiscountInfo").hide();
+    	}
+    },
+    
+
+    getSku: function(sides) {
+        var handshakePage = this;
+
+        // We need four variables: the type  of the menu, the size, the number of sides and the lamination boolean
+        var sizeKey = $('#skuKeyMenuSize').attr('value'); // Taken from the jsp
+
+        // Let' always make the smaller size number be the first one
+        var xPosition = sizeKey.indexOf("x");
+        var firstNumber = sizeKey.substring(0,xPosition);
+        var secondNumber = sizeKey.substring(xPosition+1);
+        firstNumber = parseFloat(firstNumber);
+        secondNumber = parseFloat(secondNumber);
+        if (secondNumber < firstNumber) {
+            sizeKey = secondNumber + "x" + firstNumber;
+        }
+
+        var numberOfSidesKey = sides;
+        var menuTypeKey = $('#skuKeyMenuType').attr('value');
+
+        var laminatedKey;
+        var laminationOption = $('#laminationType').attr('value');
+        if (laminationOption != "None") {
+            var selectedLaminationOption = $('#laminationSelect option:selected');
+            var papersSelect = $('#papersSelect').val();
+            if (selectedLaminationOption.attr('value') == 'yes' || (papersSelect && papersSelect.indexOf('laminated') > -1)) {
+                laminatedKey = "yes";
+            } else {
+                laminatedKey = "no";
+            }
+        } else {
+            laminatedKey = "no";
+        }
+        // Hack for table tents
+        if (menuTypeKey == "tabletent") {
+            if(typeof(sizeKey) === 'undefined' || (sizeKey !== '5x7' && sizeKey !== '4x6')){
+            	sizeKey = "5x7";
+            }
+        } else if (menuTypeKey == "commentcards") {
+            sizeKey = "3.5x8.5";
+        }
+        
+        var key = menuTypeKey + "-" + sizeKey + "-" + laminatedKey + "-" + numberOfSidesKey;
+        if ($('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") > -1) {
+        	key += '-synthetic';
+        }
+        
+        var sku = handshakePage.skuMatrix[key];
+        /**
+         * The products for letter bifold and legal trifold were later added and the SKU determined using the normal determinants will be the same as for letter trifold and legald quadfold.
+         * Because of this we will add the +1 at the end of the SKU to identify the right types of menus, so that the folding instructions get transmitted correctly.
+         */
+        try{
+        	if(handshakePage.nextgenSize != null && handshakePage.nextgenSize.indexOf('takeout') > -1){
+        		if(handshakePage.nextgenSize.indexOf('takeout letter bifold') > -1 || handshakePage.nextgenSize.indexOf('takeout legal trifold') > -1){
+                	if(sku.indexOf('100-F1') == -1)
+                		sku += '1';
+        		}
+        		if(handshakePage.nextgenSize.indexOf('takeout trifold') > -1 || handshakePage.nextgenSize.indexOf('takeout quadfold') > -1){
+        	    	if(sku.indexOf('100-F1') > -1)
+        	    		sku = sku.substring(0,sku.length - 1); 		
+        		}
+            }else{
+            	//for takeouts other than MB2 takeouts remove the new size ids since they are not yet supported
+            	if(menuTypeKey == "takeout"){
+            		var printFileId = $('#printFileId').attr('value');
+            		if (printFileId != null && printFileId !== '') {
+            			if (printFileId == 19 && sku.indexOf('100-F1') == -1) {
+            				sku += '1';
+            			} else if (printFileId == 3 && sku.indexOf('100-F1') > -1) {
+            				sku = sku.substring(0,sku.length - 1);
+            			} if (printFileId == 20 && sku.indexOf('100-F1') == -1) {
+            				sku += '1';
+            			} else if (printFileId == 4 && sku.indexOf('100-F1') > -1) {
+            				sku = sku.substring(0,sku.length - 1);
+            			}
+            		}else{
+            			//remove the bi-fold markers from the key in case of TE tri-fold takeouts.
+            			if ((sizeKey === "8.5x14" || sizeKey === "8.5x11") && sku.indexOf('100-F1') > -1) {
+            				sku = sku.substring(0,sku.length - 1);
+            			}
+            		}
+            	}
+            }
+        }catch(err){
+        	console.log(err.stack);
+        }
+        return sku;
+    },
+
+    getLineItemMarkup: function(pageNumber, sides) {
+        var handshakePage = this;
+
+        // First the markup
+        var tr = $('<tr>');
+        tr.attr('class', 'lineItem');
+
+        var labelTd = $('<td>');
+        if (sides == 1) {
+            labelTd.text("Page " + pageNumber + ", print single sided");
+        } else {
+            labelTd.text("Pages " + pageNumber + "-" + parseInt(pageNumber+1) + ", print double sided" + handshakePage.getExtraLabelByMenyType());
+        }
+
+        tr.attr('data-sku', this.getSku(sides));
+
+        var pages = sides == 1 ? pageNumber : pageNumber + "-" + parseInt(pageNumber+1);
+        tr.attr('data-pages', pages);
+
+        // labelTd.attr('class', 'lead')
+
+        tr.append(labelTd);
+
+        var labelPrice = $('<td>');
+        labelPrice.attr('class', 'pull-right');
+
+        var spanPrice = $('<span>');
+        spanPrice.attr('class', 'lineItemPrice');
+
+        labelPrice.text('$');
+        labelPrice.append(spanPrice);
+
+        tr.append(labelPrice);
+
+        // Now for the price
+        var price = handshakePage.getLineItemPrice(sides);
+        spanPrice.text(price.toFixed(2));
+        
+        return tr;
+    },
+    
+    getMenuType: function(){
+    	var menuTypeKey = $('#skuKeyMenuType').attr('value');
+    	return menuTypeKey;
+    },
+    
+    getExtraLabelByMenyType: function(){
+    	var handshakePage = this;
+    	
+    	var menuTypeKey = handshakePage.getMenuType();
+    	if( typeof(menuTypeKey) !== 'undefined' && menuTypeKey === 'takeout'){
+    		return " and folded";
+    	}
+    	return "";
+    },
+    
+    getTableTentPlaceholder: function() {
+        var labels = JSON.parse($('#thumbnailLabels').attr('value'));
+//        var $li = $('<li class="pc-table-tent">');
+        var $li = $('<li>');
+        var $img = $('<img class="tableTentPlaceholder">');
+        $li.append($img);
+
+        return $li;
+    },
+    
+    getTakeoutPlaceholder: function() {
+        var labels = JSON.parse($('#thumbnailLabels').attr('value'));
+        var $li = $('<li>');
+        var $img = $('<img class="tableTentPlaceholder">');
+        $li.append($img);
+
+        return $li;
+    },
+    
+    getSingleThumbPlaceholder: function() {
+        var labels = JSON.parse($('#thumbnailLabels').attr('value'));
+        
+        var li = $('<li>');
+
+        var img = $('<img>');
+        img.attr('class', 'singlePlaceholder');
+        li.append(img);
+
+        if (typeof labels["single"] != 'undefined') {
+            var label = $('<label>');
+            label.attr('class', 'thumbLabelSingle');
+            label.text(labels["single"]);
+            li.append(label);
+        }
+        
+        return li;
+    },
+
+    getDoubleThumbPlaceholder: function() {
+        var labels = JSON.parse($('#thumbnailLabels').attr('value'));
+        
+        var li = $('<li>');
+
+        var imgFront = $('<img>');
+        imgFront.attr('class', 'doublePlaceholderFront');
+        li.append(imgFront);
+
+        if (typeof labels["double-front"] != 'undefined') {
+            var label = $('<label>');
+            label.attr('class', 'thumbLabelDoubleFront');
+            label.text(labels["double-front"]);
+            li.append(label);
+        }
+
+        var imgBack = $('<img>');
+        imgBack.attr('class', 'doublePlaceholderBack');
+        li.append(imgBack);
+
+        if (typeof labels["double-back"] != 'undefined') {
+            var label = $('<label>');
+            label.attr('class', 'thumbLabelDoubleBack');
+            label.text(labels["double-back"]);
+            li.append(label);
+        }
+
+        return li;
+    },
+    
+    getUploadedTakeoutPlaceholder: function() {
+        var labels = JSON.parse($('#thumbnailLabels').attr('value'));
+        
+        var li = $('<li>');
+
+        var imgFront = $('<img>');
+        imgFront.attr('class', 'doublePlaceholderFront');
+        li.append(imgFront);
+
+        if (typeof labels["double-front"] != 'undefined') {
+            var label = $('<label>');
+            label.attr('class', 'thumbLabelDoubleFront');
+            label.text(labels["double-back"]);
+            li.append(label);
+        }
+
+        var imgBack = $('<img>');
+        imgBack.attr('class', 'doublePlaceholderBack');
+        li.append(imgBack);
+
+        if (typeof labels["double-back"] != 'undefined') {
+            var label = $('<label>');
+            label.attr('class', 'thumbLabelDoubleBack');
+            label.text(labels["double-front"]);
+            li.append(label);
+        }
+
+        return li;
+    },
+    
+    setTotalsWithDiscount : function(discountPercent, decimalPlaces, subTotal) {
+    	try{
+	    	var roundedValue = (subTotal * discountPercent) / 100;
+		    discountValue = roundedValue.toFixed(decimalPlaces);
+		    $('#discountValueLabel').text(discountValue);
+		    $('.print-discount-panel').show();
+    	}catch(err){
+    		console.log(err.stack);
+    	}
+	    
+    	var handshakePage = this;
+    	var setTotalsCallback = 
+    		function(response) {
+    			var discountValue = 0;
+    			try{
+    				if(response){
+    					discountValue = parseFloat(response);
+    				}	
+    			}catch(err){
+    			    var roundedValue = Math.round(rnum * Math.pow(10, rlength)) / Math.pow(10, rlength);
+    			    discountValue = roundedValue.toFixed(rlength);
+    		    }
+    		    $('#discountValueLabel').text(discountValue.toFixed(2));
+    		    $('.print-discount-panel').show();
+    		    
+    		    handshakePage.updateShippingPriceTotal(subTotal);
+    		    
+    		    var promotionalDiscount = 0;
+    		    var promotionalDiscountValue = $('#promotionalDiscountValueLabel').text();
+    		    if(!promotionalDiscountValue.match("xx$")){
+    		    	promotionalDiscount = promotionalDiscountValue;
+    		    }
+    		    
+    		    var subTotalWithDiscountLabel = '$' + (subTotal - promotionalDiscount).toFixed(2);
+    		    if (!handshakePage.isFremium) {
+    		    	subTotalWithDiscountLabel = '$' + (subTotal - discountValue - promotionalDiscount).toFixed(2);
+    		    }
+    		    $('#subTotalWithDiscountLabel').text(subTotalWithDiscountLabel);
+    		    
+    		    if($("#subTotalWithDiscountLabel").text() != "" && $('#subTotalWithShippingLabel').text() == "") {
+    	        	$("#subTotalWithDiscountLabel").show();
+    	        }else{
+    	        	$("#subTotalLabel").removeClass("hide");
+    	        }
+            }
+    	
+    	DwrUtils.getDiscountValue(subTotal, discountPercent, decimalPlaces, setTotalsCallback);
+    },
+    
+    setPromotionalDiscount : function(discount, decimalPlaces, subTotal){
+	    if (discount.match("%$")) {
+	    	var setTotalsCallback = function(response) {
+	    		var discountValue = 0;
+	    		try{
+	    			if(response){
+	    				discountValue = parseFloat(response);
+	    			}	
+	    		}catch(err){
+	    			var roundedValue = Math.round(rnum * Math.pow(10, rlength)) / Math.pow(10, rlength);
+	    		    discountValue = roundedValue.toFixed(rlength);
+	    	    }
+	    		var memberDiscount = 0;
+	    		var memberDiscountValue = $('#discountValueLabel').text();
+	    		if(!memberDiscountValue.match("xx$")){
+	    			memberDiscount = memberDiscountValue;
+	    		}
+	    	    $('#promotionalDiscountValueLabel').text(discountValue.toFixed(2));
+	    	    $('#subTotalWithDiscountLabel').text('$' + (subTotal - discountValue - memberDiscount).toFixed(2));
+	    	    $('#subTotalLabel').text((subTotal - discountValue).toFixed(2));
+	    	    $('#subTotalWithDiscountLabel').show();
+	    	    $('.print-discount-panel').show();
+	    	}
+	    	
+	    	DwrUtils.getDiscountValue(subTotal, discount.substring(0, (discount.length - 1)), decimalPlaces, setTotalsCallback);
+	    }else{
+	    	var memberDiscount = 0;
+	    	var memberDiscountValue = $('#discountValueLabel').text();
+	    	if(!memberDiscountValue.match("xx$")){
+	    		memberDiscount = memberDiscountValue;
+	    	}
+	    	
+    		$('#promotionalDiscountValueLabel').text(parseFloat(discount.substring(1, discount.length )).toFixed(2));
+	    	$('#subTotalWithDiscountLabel').text('$' + (subTotal - discount.substring(1, discount.length ) - memberDiscount).toFixed(2));
+	    	$('#subTotalLabel').text((subTotal - discount.substring(1, discount.length )).toFixed(2));
+	    	$('#subTotalWithDiscountLabel').show();
+	    	$('#subTotalWithShippingLabel').hide();
+	    	$('.print-discount-panel').show();
+	    }
+    },
+}
+
+function updatePaperOptions(showLaminated) {
+	$papersSelect = $('#papersSelect');
+	$papersSelect2 = $('#papersSelect2 ul');
+	$papersSelect2.empty();
+	
+	var label = $('<p>Select Paper Type</p>');
+	label.appendTo($papersSelect2);
+	
+	$option = $('<li data-value="glossy-cardstock"' + ($papersSelect.val() == 'glossy-cardstock' ? 'class="selected"': '') + '>' +
+					'Cardstock <span>12pt glossy</span>' + 
+					'<div class="check pull-right hide">' +
+						'<svg class="icon icon-check"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-check"></use></svg>' +
+					'</div>' +
+				'</li>');
+	$option.appendTo($papersSelect2);
+	
+	if (showLaminated) {
+		$option = $('<li data-value="laminated-cardstock"' + ($papersSelect.val() == 'laminated-cardstock' ? 'class="selected"': '') + '>' +
+				'Laminated Cardstock <span>5ml laminated</span>' + 
+				'<div class="check pull-right hide">' +
+					'<svg class="icon icon-check"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-check"></use></svg>' +
+				'</div>' +
+			'</li>');
+		$option.appendTo($papersSelect2);
+	}
+	
+	if ($('#canChoosePaper').val() == 'true') {
+		$option = $('<li data-value="synthetic"' + ($papersSelect.val() == 'synthetic' ? 'class="selected"': '') + '>' +
+				'Premium Synthetic <span>14pt polyester</span>' +  
+				'<div class="check pull-right hide">' +
+					'<svg class="icon icon-check"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#icon-check"></use></svg>' +
+				'</div>' +
+			'</li>');
+		$option.appendTo($papersSelect2);
+	}
+	
+	if (typeof DropDown !== 'undefined') {
+		var papersSelectDropDown = new DropDown($('#papersSelect2'), $('#papersSelect'), 'radio');
+	}
+}

@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css?family=Indie+Flower&display=swap:400,600');
+
+body {
+    margin: 0;
+    padding-bottom:100px;
+	background: grey;
+	font-family: 'Indie Flower', cursive;
+	font-weight: 800;
+}
+
+.container {
+	width: 90%;
+	margin: 0 auto;
+}
+
+header {
+  background: #55d6aa;
+}
+
+header::after {
+  content: '';
+  display: table;
+  clear: both;
+}
+
+.logo {
+  float: left;
+  padding: px 0;
+}
+
+nav {
+  float: right;
+}
+
+nav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+nav li {
+  display: inline-block;
+  margin-left: 70px;
+  padding-top: 23px;
+
+  position: relative;
+}
+
+nav a {
+  color: #444;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: 20px;
+}
+
+nav a:hover {
+  color:white;
+}
+
+nav a::before {
+  content: '';
+  display: block;
+  height: 5px;
+  background-color: #444;
+
+  position: absolute;
+  top: 0;
+  width: 0%;
+
+  transition: all ease-in-out 250ms;
+}
+
+nav a:hover::before {
+  width: 100%;
+}
+
+#footer{
+    text-align: center;    
+    position: absolute;
+    bottom: 0;
+    width:100%;
+}
+
+#footer p u{
+    color:blue;
+}
+
+.welcome{
+    background-color: lightgrey;
+    width: 300px;
+    border: 15px solid purple;
+    padding: 20px;
+    margin: 20px;
+    float: right;
+    height: 290px;
+}
+
+.uol{
+    background-color: lightgrey;
+    width: 600px;
+    border: 15px solid purple;
+    padding: 20px;
+    margin: 20px;
+    float: left;
+    list-style-type: none;
+    height: 290px;
+    overflow: hidden;
+    background-color: #333;
+}
+
+li a1, .dropbtn {
+    display: inline-block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+  }
+
+
+

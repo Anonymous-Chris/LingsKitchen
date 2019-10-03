@@ -1,0 +1,969 @@
+var $paperSelectControl = $('#papersSelect');
+var $selectSidesControl = $('#selectSides');
+
+var print = {};
+ 
+print.PrintQuoteUtils = {
+	activeConfiguration : {},
+	activeSelection : {},
+	userSelection : {},
+	reset : function(){
+		
+		print.PrintQuoteUtils.activeConfiguration = {
+			isMenu : false, 
+			isFlyer : false,
+			isPoster : false,
+			isKidsMenu : false,
+			isTakeout : false,
+			isTableTent : false, 
+			isBusinessCard : false,
+			isLoyaltyCard : false,
+            isGiftCertificate : false,
+			isSpecial : false,
+			
+			isHalfpageMenu : false,
+			
+			quote : null,
+			
+			numberOfPages : 1,
+			skuKeyMenuType : "",
+			skuKeyMenuSize : "",
+			canChooseSides : "",
+			canChoosePaper : "",
+			possibleBleeds : "",
+			laminationType : "", 
+			invalidTakeout : false,
+			
+			pageSize : 'letter'
+		}
+		
+		print.PrintQuoteUtils.activeSelection = {
+			current_id : null,
+			
+			design_id : null,
+			document_id : null,
+			pdf_id : null,
+			
+			facility : null,
+			quantity : -1,
+			bleed : null,
+			sku : null,
+			pages : null,
+			optLamination : -1,
+			optSides : -1,
+			optQuantity : -1,
+			optBleeds : -1,
+			printType : -1,
+			giftStartNumber : 0
+		}
+		
+		print.PrintQuoteUtils.userSelection = {
+			quantity : {
+				selected : null,
+				takeout : {
+					specialPaper : null
+				}
+			},
+			paper : null
+		}
+		
+		$('#paperPanel').hide();
+		$('#addToCartBtn').text('Add to Cart');
+		
+	},
+	updatePaperOptions : function(showLaminated) { 
+		var activeConfiguration = print.PrintQuoteUtils.activeConfiguration;
+		var pageSize = activeConfiguration.pageSize;
+	
+		var selectedPaper = $('#papersSelect').val(),
+			$glossyCardstock = $('.pq-pt_glossy-cardstock'), 
+			$laminatedCardstock = $('.pq-pt_laminated-cardstock'),
+			$syntheticPaper = $('.pq-pt_synthetic'),
+			$hybridPaper = $('.pq-pt_hybrid'),
+			$doublethickPaper = $('.pq-pt_doublethick'),
+			canChoosePaper = activeConfiguration.canChoosePaper;
+		
+		//hide all the paper selections
+		$('.pq-paper-type').addClass('hide');
+		$('.pq-paper-type').removeClass('selected');
+		
+		//show only the ones that apply
+		$glossyCardstock.removeClass('hide');
+		if($glossyCardstock.data('value') == selectedPaper){
+			$glossyCardstock.addClass('selected');
+		}
+
+		$('.pq-paper-type').each(function(){
+			$paper = $(this);
+			//set the right description for the default paper depending on the the selected product type
+			var descriptionSet = false;
+			$paper.find('.pt-paper-description').each(function(){
+				$(this).addClass('hide');
+				if( (activeConfiguration.isFlyer && $(this).hasClass('pq-desc_flyer')) || 
+				    (activeConfiguration.isPoster && $(this).hasClass('pq-desc_poster')) || 
+				    (activeConfiguration.isKidsMenu && $(this).hasClass('pq-desc_kids')) || 
+				    (activeConfiguration.isTakeout && $(this).hasClass('pq-desc_takeout')) || 
+				    (activeConfiguration.isTableTent && $("#selectSides").val() === 'tent' && $(this).hasClass('pq-desc_table-tent-tent')) || 
+				    (activeConfiguration.isBusinessCard && $(this).hasClass('pq-desc_business-card')) || 
+				    (activeConfiguration.isLoyaltyCard && $(this).hasClass('pq-desc_loyalty-card')) ){
+					$(this).removeClass('hide');
+					descriptionSet = true;
+					return true;
+				}
+			})
+			if(!descriptionSet){
+				$paper.find('.pq-desc_default').removeClass('hide');
+			}	
+			 
+			//set the correct icon ...
+			var iconSet = false;
+			if($paper.find('.pt-icon').length > 1){
+				$paper.find('.pt-icon').each(function(){
+					$(this).addClass('hide');
+					if( (activeConfiguration.isTakeout && $(this).hasClass('pq-icon_takeout')) || 
+					    (activeConfiguration.isBusinessCard && $(this).hasClass('pq-icon_business-card')) ){
+						$(this).removeClass('hide');
+						iconSet = true;
+						return true;
+					}
+				})
+				if(!iconSet){
+					$paper.find('.pq-icon_default').removeClass('hide');
+				}
+			}
+		})
+		
+		
+		if(!activeConfiguration.isTakeout){
+			if (showLaminated) {
+				$laminatedCardstock.removeClass('hide');
+				if($laminatedCardstock.data('value') == selectedPaper){
+					$laminatedCardstock.addClass('selected');
+				}
+			}
+		}
+
+		if(activeConfiguration.isBusinessCard){
+			$doublethickPaper.removeClass('hide');
+			if($doublethickPaper.data('value') == selectedPaper){
+				$doublethickPaper.addClass('selected');
+			}	
+		}
+		
+		if(activeConfiguration.isTakeout){
+			$hybridPaper.removeClass('hide');
+			if($hybridPaper.data('value') == selectedPaper){
+				$hybridPaper.addClass('selected');
+			}
+			/* [NEW-PRODUCTS-PQ] */
+			$syntheticPaper.removeClass('hide');
+			if($syntheticPaper.data('value') == selectedPaper){
+				$syntheticPaper.addClass('selected');
+			}
+			
+			//for dine in menus the glossy cardstock option is not available. if that was the default selection we will change it to $syntheticPaper
+			if(pageSize.indexOf('dinein') > -1){
+				$glossyCardstock.addClass('hide');
+				if($glossyCardstock.hasClass('selected')){
+					$hybridPaper.addClass('selected');
+					print.PrintQuoteUtils.selectPaperType($hybridPaper);
+				}
+			}
+		}
+		
+		if(canChoosePaper && !print.PrintQuoteUtils.activeConfiguration.isHalfpageMenu){
+			$syntheticPaper.removeClass('hide');
+			if($syntheticPaper.data('value') == selectedPaper){
+				$syntheticPaper.addClass('selected');
+			}	
+		}
+	}, 
+	updatePaperPanelVisibility : function() { 
+		var configuration = print.PrintQuoteUtils.activeConfiguration;
+		var availableOptions = 0;
+		var $selectedoption = null;
+		var $firstOption = null;
+		$('.pq-paper-type').each(function(){
+			if(!$(this).hasClass('hide')){
+				availableOptions ++;
+				if($(this).hasClass('selected')){
+					$selectedOption = $(this);
+				}
+				if($firstOption === null){
+					$firstOption = $(this);
+				}
+			}
+		})  
+		
+		if (availableOptions < 2) {
+    		if(configuration.isTableTent){
+    			$('#paperPanel').show();
+            }else{
+    			$('#paperPanel').hide();
+        	}
+			$('#papersSelect').val('glossy-cardstock');
+    		$('#papersSelect option[value=glossy-cardstock]').attr('selected', 'selected');
+    	} else {
+    		if (configuration.canChoosePaper || configuration.isBusinessCard || configuration.isTakeout || configuration.isTableTent || configuration.isHalfpageMenu) {
+    			$('#paperPanel').show();
+    		}
+    	} 
+		
+		if($selectedOption === null && $firstOption !== null){
+			print.PrintQuoteUtils.selectPaperType($firstOption);
+		}
+	},
+	selectPaperType : function($paperTypeControl, refresh){
+		var handshakePage= print.PrintQuote.Configurator.handshakePage;
+		$('.pq-paper-type').removeClass('selected');
+		$paperTypeControl.addClass('selected');
+		$paperSelectControl.find('option[value=' + $paperTypeControl.data('value') + ']').prop('selected',true);
+		
+		/** [SPECIAL_SCENARIO] start
+		 * For takeouts that will be printed on heavy duty paper the quantities that are set for the menus will be used. 
+		 * For papers other than hybrid the print specification quantities will be used.
+		 */
+		if(print.PrintQuoteUtils.activeConfiguration.isTakeout){
+			if($paperTypeControl.data('value') === 'hybrid' || $paperTypeControl.data('value') === 'synthetic'){
+				print.PrintQuoteUtils.updatePossibleQuantities(true, true);
+			}else{
+				print.PrintQuoteUtils.updatePossibleQuantities(true, false);
+			}
+			//hybrid and synthetic menus are all printed at the default facility, so we'll need to re-estimate here.
+			if(handshakePage !== null){
+				handshakePage.setDefaultFacility();
+			}
+			try{
+				if(mhm.Config.isVisitor !== true){
+					UPS.loadUPSTracking();
+				}	
+			}catch(err){
+				console.log('Unable to identify shipping estimations');
+			}
+		}
+		/** [SPECIAL_SCENARIO] end */
+		
+		$paperSelectControl.change();
+		if(typeof(refresh) === 'undefined' || refresh === true){
+			print.PrintQuoteUtils.refreshOrderSummary();
+		}
+	},
+	resetPaperType : function(){
+		var $paperTypeControl = $('.pq-pt_glossy-cardstock');
+		$('.pq-paper-type').removeClass('selected');
+		$paperTypeControl.addClass('selected');
+		$paperSelectControl.find('option[value=' + $paperTypeControl.data('value') + ']').prop('selected',true);
+
+		/** [SPECIAL_SCENARIO] start
+		 * For takeouts that will be printed on heavy duty paper the quantities that are set for the menus will be used. 
+		 * For papers other than hybrid the print specification quantities will be used.
+		 */
+		if(print.PrintQuoteUtils.activeConfiguration.isTakeout){
+			if($paperTypeControl.data('value') === 'hybrid' || $paperTypeControl.data('value') === 'synthetic'){
+				print.PrintQuoteUtils.updatePossibleQuantities(true, true);
+			}else{
+				print.PrintQuoteUtils.updatePossibleQuantities(true, false);
+			}	
+		}
+		/** [SPECIAL_SCENARIO] end */
+
+	},
+	updateSidesPanelVisibility : function(){
+		
+		var $sidesSelectionFullPanel = $('#sides-selection-full-panel');
+		//check how many options are available for side selection for the user, and if there is only one hide the pannel.
+		var availableOptions = 0;
+		var $selectedOption = null;
+		var $firstOption = null;
+		$('.pq-document-type').each(function(){ 
+			if(!$(this).hasClass('hide')){
+				availableOptions ++;
+				if($(this).hasClass('selected')){
+					$selectedOption = $(this);
+				}
+				if($firstOption === null){
+					$firstOption = $(this);
+				}
+			}
+		})
+		if(availableOptions < 2){
+			$sidesSelectionFullPanel.hide();	
+		}
+		
+		/* select the first option by default if nothing is selected. */
+		if($selectedOption === null && $firstOption !== null){
+			$firstOption.addClass('selected');
+			$selectSidesControl.val($firstOption.data('value'));
+			$selectSidesControl.change();
+			print.PrintQuoteUtils.refreshOrderSummary();
+		}
+		
+	},
+	selectSidesBySidesValue : function(sidesValue, refresh){
+		$sidesControl = null;
+		$('.pq-document-type').each(function(){
+			if($(this).data('value') === sidesValue){
+				$sidesControl = $(this);
+				return true;
+			}
+		});
+		if($sidesControl !== null){
+			print.PrintQuoteUtils.selectSides($sidesControl, refresh)
+		}
+	},
+	selectSides : function($sidesControl, refresh){
+		$('.pq-document-type').removeClass('selected');
+		
+		$sidesControl.addClass('selected');
+		$selectSidesControl.val($sidesControl.data('value'));
+		$selectSidesControl.change();
+		
+		if(typeof(refresh) === 'undefined' || refresh === true){
+			print.PrintQuoteUtils.refreshOrderSummary();
+		}
+	}, 
+	getSidesSelection : function(){
+		var $selectedDocumentType = null;
+		$('.pq-document-type').each(function(){
+			if($(this).hasClass('selected') && !$(this).hasClass('hide')){
+				$selectedDocumentType = $(this);
+				return true;
+			}
+		})
+		if($selectedDocumentType !== null){
+			return $selectedDocumentType.data('value');
+		}
+		return null;
+	},
+	updatePossibleQuantities : function(sameQuoteType, useMenusQuantities){
+		var useMenus = false,
+			quote = print.PrintQuoteUtils.activeConfiguration.quote;
+		if(typeof(useMenusQuantities) !== 'undefined'){
+			useMenus = useMenusQuantities;
+		}
+		var summaryLineItems = $('#summaryLineItems tr.lineItem'),
+			printSpecification = quote['printSpecificationJSON'],
+			possibleQuantities = !useMenus ? printSpecification['possibleQuantities'] : printSpecification['menuPossibleQuantities'],
+			pressProofQuantity = !useMenus ? printSpecification['pressProofQuantity'] : 1,
+			$optQuantity = $('#optQuantity'),
+			$optQuantity2 = $('#optQuantity2 ul');
+		
+		var pageSize = 'letter';
+		if(typeof(quote) != 'undefined' && typeof(quote['menuSize']) != 'undefined' && typeof(quote['menuSize']['pageSize']) != 'undefined'){
+			pageSize = quote['menuSize']['pageSize'];
+		}
+		
+		var sku = print.PrintQuoteUtils.getSKU(2);
+		
+		var selectedOption = urlQty;
+		if(sameQuoteType && !selectedOption){
+			//if the user comes to the print quote without changing the size and the print type, we will keep his last selection.
+			selectedOption = $( "#optQuantity option:selected" ).text();
+		}
+		
+		$optQuantity.empty();
+		$optQuantity2.empty();
+		
+		var $pressProofOption = null,
+			pressProofMessage = "",
+			isPressProof;
+		
+		for (var i = 0; i < possibleQuantities.length; i++){
+			$option = $('<option ' + (possibleQuantities[i] + '' === selectedOption ? 'selected="selected"' : '') + ' name="' + possibleQuantities[i] + '" class="' + (parseInt(pressProofQuantity) === parseInt(possibleQuantities[i]) ? 'pressProof' : '') + '" value="' + possibleQuantities[i] + '">' + possibleQuantities[i] + '</option>');
+			$option.appendTo($optQuantity);
+
+			var price = 0;
+			var quantity = possibleQuantities[i];
+
+			$(summaryLineItems).each(function(index){
+				var sku = $(this).attr('data-sku');
+				price += quote.priceMatrix[sku][quantity];
+			});
+
+            price = price.toFixed(2);
+			//var price = quote.priceMatrix[sku][quantity];
+
+			isPressProof = (pressProofQuantity === quantity);
+			pressProofMessage = 'Press Proof ' + (quantity > 1 ? '(' + quantity + ')' : '');
+
+			$option2 = $('<li data-value="' + quantity + '" class="print-possible-quantity ' + (possibleQuantities[i] + '' === selectedOption ? ' selected' : '') + '">' +
+					(isPressProof ? pressProofMessage : quantity) +
+					(!isPressProof ? ('<span class="pq-price-per-item pull-right">' + print.PrintQuoteUtils.getPricePerItem(price / quantity) + '</span>') : '') +
+					'<label class="pull-right" style="margin-right: 15px;">$' + price + '</label><span class="pq-price-currency pull-right">$</span>' +
+					'<div class="check pull-right hide">' +
+					'</div>' +
+                    '<span class="pq-free-shipping-label pull-right hide">FREE SHIPPING</span>' +
+			'</li>');
+			 
+			if(pressProofQuantity === quantity){
+				$pressProofOption = $option2;
+			}else{
+				$option2.appendTo($optQuantity2);
+			}
+
+		}
+
+		if($pressProofOption != null){
+			$pressProofOption.appendTo($optQuantity2);
+		}
+		
+		//on click on each option synchronize the optQuantity select.
+		$('.print-possible-quantity').each(function(){
+			$(this).click(function(e){
+				e.stopPropagation();
+				$('.print-possible-quantity').removeClass('selected');
+				$(this).addClass('selected');
+				$('#optQuantity option[value=' + $(this).data('value') + ']').prop('selected',true);
+				$('#optQuantity').change();
+				print.PrintQuoteUtils.syncUserSelection({quantity : true});
+				print.PrintQuoteUtils.updatePrintQuotePrefferences();
+			})
+		});
+		
+		print.PrintQuoteUtils.setupSelectedQuantity();
+	},
+	selectQuantityByQuantityValue : function(quantityValue, refresh){
+		$quantityControl = null;
+		$('.print-possible-quantity').each(function(){
+			if($(this).data('value') == quantityValue){
+				$quantityControl = $(this);
+				return true;
+			}
+		});
+		if($quantityControl !== null){
+			print.PrintQuoteUtils.selectQuantity($quantityControl)
+		}
+	},
+	selectQuantity : function($quantityControl){
+		$('.print-possible-quantity').removeClass('selected');
+		$quantityControl.addClass('selected');
+		$('#optQuantity option[value=' + $quantityControl.data('value') + ']').prop('selected',true);
+		$('#optQuantity').change();
+	},
+	setQuote : function(quote){
+		var menuType = 1;
+		var menuSize = null, isHalfpage = false;
+		if (typeof(quote['menuType']) != 'undefined' && quote['menuType'] !== null) {
+			menuType = quote['menuType'];
+			print.PrintQuoteUtils.activeConfiguration.isMenu = menuType === 1;
+			print.PrintQuoteUtils.activeConfiguration.isFlyer = menuType === 4;
+			print.PrintQuoteUtils.activeConfiguration.isPoster = menuType === 99;
+			print.PrintQuoteUtils.activeConfiguration.isKidsMenu = menuType === 3;
+			print.PrintQuoteUtils.activeConfiguration.isTakeout = menuType === 5;
+			print.PrintQuoteUtils.activeConfiguration.isTableTent = menuType === 2;
+			print.PrintQuoteUtils.activeConfiguration.isBusinessCard = menuType === 6;
+			print.PrintQuoteUtils.activeConfiguration.isLoyaltyCard = menuType === 7;
+            print.PrintQuoteUtils.activeConfiguration.isGiftCertificate = menuType === 9;
+			print.PrintQuoteUtils.activeConfiguration.isSpecial = menuType === 12;
+		} 
+		
+		//identifying half page menus for the menu maker wors by the menu page size string but for uploads is different so we will rely on the menu size.
+		if(print.PrintQuoteUtils.activeConfiguration.isMenu || print.PrintQuoteUtils.activeConfiguration.isSpecial){
+			if (typeof(quote['menuSize']) != 'undefined' && quote['menuSize'] !== null) {
+				menuSize = quote['menuSize'];
+				if((menuSize['width'] == 5.5 && menuSize['height'] == 8.5) || 
+				   (menuSize['width'] == 4.25 && menuSize['height'] == 11) ||
+				   (menuSize['width'] == 4.25 && menuSize['height'] == 14)){
+					print.PrintQuoteUtils.activeConfiguration.isHalfpageMenu = true;
+				}
+			}	
+		}
+
+		if(typeof(quote) != 'undefined' && typeof(quote['menuSize']) != 'undefined' && typeof(quote['menuSize']['pageSize']) != 'undefined'){
+			print.PrintQuoteUtils.activeConfiguration.pageSize = quote['menuSize']['pageSize'];
+		}
+		
+		print.PrintQuoteUtils.activeConfiguration.quote = quote;
+	},
+	refreshOrderSummary : function(){
+		var quote = print.PrintQuoteUtils.activeConfiguration.quote;
+		var configuration = print.PrintQuoteUtils.activeConfiguration;
+		
+		$('.pq-info_menu-name').text(print.PrintQuoteUtils.getFieldValue(quote, 'menuName', ''));
+		var pagesNo = print.PrintQuoteUtils.getFieldValue(quote, 'pagesThumbnails', []).length;
+		var pagesMessages = pagesNo < 2 ? (pagesNo + " page") : (pagesNo + " pages");
+		
+		$('.pq-info_menu-pages').text(pagesMessages);
+		
+		$('.pq-info_menu-pages').text(pagesMessages);
+		if(configuration.isTakeout || configuration.isBusinessCard || configuration.isLoyaltyCard || configuration.isGiftCertificate){
+			$('.pq-info_menu-pages').hide();
+		}else{
+			$('.pq-info_menu-pages').show();
+		}
+		$('.pq-info_document_size').text(quote['menuSize']['widthFormated'] + ' x ' + quote['menuSize']['heightFormated'] + ' in');
+		$('.pq-info_quantity').text($('.print-possible-quantity.selected').data('value') + ' copies');
+
+		if (configuration.isGiftCertificate) {
+            $('.pq-info_includes-envelopes').show();
+        } else {
+            $('.pq-info_includes-envelopes').hide();
+        }
+		
+		$selectedPaperType = null; 
+		$('.pq-paper-type').each(function(){
+			if($(this).hasClass('selected') && !$(this).hasClass('hide')){
+				$selectedPaperType = $(this);
+				return true;
+			}
+		}) 
+		if($selectedPaperType !== null){
+			$description = $selectedPaperType.find('.pt-paper-description').first();
+			$selectedPaperType.find('.pt-paper-description').each(function(){
+				if(!$(this).hasClass('hide')){
+					$description = $(this);
+					return true;
+				}
+			}) 
+			var name = $description.find('.pt-name').first().text();
+			var summary = $description.find('.pt-summary').first().text();
+			$('.pq-info_paper-type').text(name /*+ " - " + summary*/);
+		
+		}
+		
+		$selectedDocumentType = null;
+		$('.pq-document-type').each(function(){
+			if($(this).hasClass('selected') && !$(this).hasClass('hide')){
+				$selectedDocumentType = $(this);
+				return true;
+			}
+		})
+		
+		var boundingMessage = '';
+		if( (pagesNo === 2 && $selectedDocumentType != null && $selectedDocumentType.data('value') === 'single') || pagesNo > 2 ){
+			boundingMessage = "(unbound)";
+		}
+		
+		if($selectedDocumentType !== null){
+			$('.pq-info_document-type').text($selectedDocumentType.find('label').first().text() + ' ' + boundingMessage);
+		}
+		//populate the selections whenever they change	
+	},
+	getSKU : function(sides) { 
+
+		var quote = print.PrintQuoteUtils.activeConfiguration.quote;
+		var printSpecification = quote['printSpecificationJSON'];
+		var pageSize = 'letter';
+		if(typeof(quote) != 'undefined' && typeof(quote['menuSize']) != 'undefined' && typeof(quote['menuSize']['pageSize']) != 'undefined'){
+			pageSize = quote['menuSize']['pageSize'];
+		}
+		
+	    // We need four variables: the type  of the menu, the size, the number of sides and the lamination boolean
+	    var sizeKey = quote['menuSize']['widthFormated'] + 'x' + quote['menuSize']['heightFormated'];
+
+	    // Let' always make the smaller size number be the first one
+	    var xPosition = sizeKey.indexOf("x");
+	    var firstNumber = sizeKey.substring(0,xPosition);
+	    var secondNumber = sizeKey.substring(xPosition+1);
+	    firstNumber = parseFloat(firstNumber);
+	    secondNumber = parseFloat(secondNumber);
+	    if (secondNumber < firstNumber) {
+	        sizeKey = secondNumber + "x" + firstNumber;
+	    }
+	    //var sizeKey = quote['menuSize']['widthFormated'] + 'x' + quote['menuSize']['heightFormated'];
+
+	    var numberOfSidesKey = sides;
+	    var menuTypeKey = printSpecification['skuKeyForMenuType'];
+
+	    var laminatedKey;
+	    var laminationOption = print.PrintQuoteUtils.activeConfiguration.laminationType;
+	    if (laminationOption != "None") {
+	        var selectedLaminationOption = $('#laminationSelect option:selected');
+	        if (selectedLaminationOption.attr('value') == 'yes') {
+	            laminatedKey = "yes";
+	        } else {
+	            laminatedKey = "no";
+	        }
+	    } else {
+	        laminatedKey = "no";
+	    }
+	    // Hack for table tents
+	    if (menuTypeKey == "tabletent") {
+	        if(typeof(sizeKey) === 'undefined' || (sizeKey !== '5x7' && sizeKey !== '4x6')){
+	        	sizeKey = "5x7";
+	        }
+	    } else if (menuTypeKey == "commentcards") {
+	        sizeKey = "3.5x8.5";
+	    }
+	     
+	    var isTakeoutHybrid = false;
+	    //hack for hybrid takeouts
+	    if (menuTypeKey != null && menuTypeKey.indexOf('takeout') > -1 && 
+	    		$('#papersSelect').val() && $('#papersSelect').val().indexOf("hybrid") > -1) {
+	    	isTakeoutHybrid = true;
+	    }
+	    var isTakeoutSynthetic = false;
+	    //hack for hybrid takeouts
+	    if (menuTypeKey != null && menuTypeKey.indexOf('takeout') > -1 && 
+	    		$('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") > -1) {
+	    	isTakeoutSynthetic = true;
+	    }
+	     
+	    var key = menuTypeKey + "-" + sizeKey + "-" + laminatedKey + "-" + numberOfSidesKey;
+	    if ($('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") > -1) {
+	    	key += '-synthetic';
+	    }
+	    if ($('#papersSelect').val() && $('#papersSelect').val().indexOf("hybrid") > -1) {
+	    	key += '-hybrid';
+        }
+        if ($('#papersSelect').val() && $('#papersSelect').val().indexOf("doublethick") > -1) {
+        	key += '-doublethick';
+        }
+        
+        var sku = quote.skuMatrix[key];
+	    /**
+	     * The products for letter bifold and legal trifold were later added and the SKU determined using the normal determinants will be the same as for letter trifold and legald quadfold.
+	     * Because of this we will add the +1 at the end of the SKU to identify the right types of menus, so that the folding instructions get transmitted correctly.
+	     */
+	    try{
+	    	if(!isTakeoutHybrid && !isTakeoutSynthetic){
+	    		if(pageSize != null && pageSize.indexOf('takeout') > -1){
+		    		if(pageSize.indexOf('takeout letter bifold') > -1 || pageSize.indexOf('takeout legal trifold') > -1){
+		            	if(sku.indexOf('100-F1') == -1)
+		            		sku += '1';
+		    		}
+		    		if(pageSize.indexOf('takeout trifold') > -1 || pageSize.indexOf('takeout letter trifold') > -1 || pageSize.indexOf('takeout quadfold') > -1){
+		    	    	if(sku.indexOf('100-F1') > -1)
+		    	    		sku = sku.substring(0,sku.length - 1); 		
+		    		}
+		        }else{
+		        	//for takeouts other than MB2 takeouts remove the new size ids since they are not yet supported
+		        	if(menuTypeKey == "takeout"){
+		        		var printFileId = $('#printFileId').attr('value');
+		        		if (printFileId != null && printFileId !== '') {
+		        			if (printFileId == 19 && sku.indexOf('100-F1') == -1) {
+		        				sku += '1';
+		        			} else if (printFileId == 3 && sku.indexOf('100-F1') > -1) {
+		        				sku = sku.substring(0,sku.length - 1);
+		        			} if (printFileId == 20 && sku.indexOf('100-F1') == -1) {
+		        				sku += '1';
+		        			} else if (printFileId == 4 && sku.indexOf('100-F1') > -1) {
+		        				sku = sku.substring(0,sku.length - 1);
+		        			}
+		        		}else{
+		        			//remove the bi-fold markers from the key in case of TE tri-fold takeouts.
+		        			if ((sizeKey === "8.5x14" || sizeKey === "8.5x11") && sku.indexOf('100-F1') > -1) {
+		        				sku = sku.substring(0,sku.length - 1);
+		        			}
+		        		}
+		        	}
+		        }
+	    	}else{
+	    		if(pageSize != null && pageSize.indexOf('takeout') > -1){
+		    		if(pageSize.indexOf('takeout letter bifold') > -1 || pageSize.indexOf('takeout legal trifold') > -1){
+		            	if(sku.indexOf('-F1') == -1)
+		            		sku += '1';
+		    		}
+		    		if(pageSize.indexOf('takeout trifold') > -1 || pageSize.indexOf('takeout letter trifold') > -1 || pageSize.indexOf('takeout quadfold') > -1){
+		    	    	if(sku.indexOf('-F1') > -1)
+		    	    		sku = sku.substring(0,sku.length - 1); 		
+		    		}
+		        }else{
+		        	//for takeouts other than MB2 takeouts remove the new size ids since they are not yet supported
+		        	if(menuTypeKey == "takeout"){
+		        		var printFileId = $('#printFileId').attr('value');
+		        		if (printFileId != null && printFileId !== '') {
+		        			if (printFileId == 19 && sku.indexOf('-F1') == -1) {
+		        				sku += '1';
+		        			} else if (printFileId == 3 && sku.indexOf('-F1') > -1) {
+		        				sku = sku.substring(0,sku.length - 1);
+		        			} if (printFileId == 20 && sku.indexOf('-F1') == -1) {
+		        				sku += '1';
+		        			} else if (printFileId == 4 && sku.indexOf('-F1') > -1) {
+		        				sku = sku.substring(0,sku.length - 1);
+		        			}
+		        		}else{
+		        			//remove the bi-fold markers from the key in case of TE tri-fold takeouts.
+		        			if ((sizeKey === "8.5x14" || sizeKey === "8.5x11") && sku.indexOf('-F1') > -1) {
+		        				sku = sku.substring(0,sku.length - 1);
+		        			}
+		        		}
+		        	}
+		        }
+	    	}
+	    }catch(err){
+	    	console.log(err.stack);
+	    }
+	    return sku;
+	},
+	getFieldValue : function(fieldParent, fieldName, defaultValue){
+		if(fieldParent !== null && typeof(fieldParent) !== 'undefined'){
+			if(typeof(fieldParent[fieldName]) !== 'undefined' && fieldParent[fieldName] !== null){
+				return fieldParent[fieldName];
+			}  
+		}
+		return defaultValue;
+	},
+	setActiveSelectionDocumentInformation : function(parameters){
+		
+		var activeSelection = print.PrintQuoteUtils.activeSelection;
+		activeSelection.document_id = parameters['document_id'];
+		activeSelection.design_id = parameters['design_id'];
+		activeSelection.pdf_id = parameters['menu_id'];
+		
+		activeSelection.current_id = null;
+		if(typeof(parameters['document_id']) !== 'undefined' && parameters['document_id'] !== null){
+			activeSelection.current_id = parameters['document_id'];
+		}else{
+			if(typeof(parameters['design_id']) !== 'undefined' && parameters['design_id'] !== null){
+				activeSelection.current_id = parameters['design_id'];
+			}else{
+				if(typeof(parameters['menu_id']) !== 'undefined' && parameters['menu_id'] !== null){
+					activeSelection.current_id = parameters['menu_id'];
+				}
+			}	
+		}
+		
+	},
+	setDefaultFacilty : function(facility){
+		
+		var activeSelection = print.PrintQuoteUtils.activeSelection;
+		activeSelection.facility = facility;
+		
+	},
+	setActiveSelection : function(){
+
+		var quote = print.PrintQuoteUtils.activeConfiguration.quote;
+		var activeSelection = print.PrintQuoteUtils.activeSelection;
+		
+		var selectedQuantity = $('#optQuantity option:selected').attr('value');
+		activeSelection.quantity = selectedQuantity;
+
+		var bleedsChosen = $('#bleedsSelect option:selected').attr('value');
+        $('#bleedsChosen').attr('value', bleedsChosen);
+        var bleeds = (bleedsChosen == "true") ? print.PrintQuoteUtils.activeConfiguration.possibleBleeds : '';
+        activeSelection.bleed = bleeds;
+
+        // Set the SKU array and the page config array
+        var skuArray = new Array();
+        var pageConfigArray = new Array();
+        var summaryLineItems = $('#summaryLineItems tr.lineItem');
+        var i = 0;
+        $(summaryLineItems).each(function(index){
+            var sku = $(this).attr('data-sku');
+            skuArray[i] = sku;
+            var pages = $(this).attr('data-pages');
+            pageConfigArray[i] = pages;
+            i++;
+        });
+        activeSelection.sku = "" + skuArray;
+        activeSelection.pages = "" + pageConfigArray;
+
+        var selectedQuantityIndex = $('#optQuantity option:selected').index();
+        var selectedSidesIndex = $('#selectSides option:selected').index();
+        var selectedLamIndex = $('#laminationSelect option:selected').index();
+        var selectedBleedsIndex = $('#bleedsSelect option:selected').index();
+        if ($('#selectSides').val() === 'tent' || ($('#papersSelect').val() && $('#papersSelect').val().indexOf("synthetic") > -1) ) {
+        	selectedLamIndex = -1;
+        }
+        //There are times when #laminationSelect is not in sync with #papersSelect. For that reason try to resynch here
+        if(typeof $('#papersSelect').val() != 'undefined' && $('#papersSelect').val() == 'laminated-cardstock'){
+        	selectedLamIndex = 1;
+        }
+        
+        activeSelection.optLamination = selectedLamIndex;
+        activeSelection.optSides = selectedSidesIndex;
+        activeSelection.optQuantity = selectedQuantityIndex;
+        activeSelection.optBleeds = selectedBleedsIndex;
+
+        activeSelection.giftStartNumber = $('#finalGiftCertStartNumber').val();
+
+        activeSelection.printType = quote['menuType'];
+        
+	},
+	getRequestParameter : function(name){
+	   if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search)){
+		   return decodeURIComponent(name[1]);
+	   }
+	},
+	isEmptyObject : function(obj) {
+	    for(var key in obj) {
+	        if(obj.hasOwnProperty(key))
+	            return false;
+	    }
+	    return true;
+	},
+	getPricePerItem : function(number){
+		var activeConfiguration = print.PrintQuoteUtils.activeConfiguration;
+		if(activeConfiguration.isPoster || activeConfiguration.isBusinessCard || activeConfiguration.isLoyaltyCard){
+			return '';
+		}
+				
+		try{
+			var price = (Math.round(number * 100) / 100);
+			return '$' + price.toFixed(2) + ' each';
+		}catch(err){
+			
+		}
+		return '';
+	},
+	roundTo2 : function(number){
+		return Math.round(number * 100) / 100;
+	},
+	setupSelectedQuantity : function(){
+		var userSelection = print.PrintQuoteUtils.userSelection;
+		var activeConfiguration = print.PrintQuoteUtils.activeConfiguration;
+		
+		var userSelectedQuantity = null;
+		var preffredQuantity = print.PrintQuoteUtils.getPrefferedQuantity();
+		var defaultQuantity = print.PrintQuoteUtils.getDefaultQuantity();
+		
+		if(userSelection.paper !== null){
+			userSelectedQuantity = userSelection.quantity.selected;
+			if(activeConfiguration.isTakeout && (userSelection.paper === 'hybrid' || userSelection.paper === 'synthetic')){
+				userSelectedQuantity = userSelection.quantity.takeout.specialPaper;
+			}
+		}
+		 
+		var quantity = defaultQuantity;
+		if(preffredQuantity !== null && typeof(preffredQuantity) !== 'undefined'){
+			if(print.PrintQuoteUtils.isAvaliableQuantity(preffredQuantity)){
+				quantity = preffredQuantity;
+			}
+		}
+		if(userSelectedQuantity !== null && typeof(userSelectedQuantity) !== 'undefined'){
+			if(print.PrintQuoteUtils.isAvaliableQuantity(userSelectedQuantity)){
+				quantity = userSelectedQuantity;
+			}
+		} 
+		console.log(' - compute selected quantity - default qty : ' + defaultQuantity + ', preffered qty : ' + preffredQuantity + ', user selected : ' + userSelectedQuantity + ' / winner : ' + quantity);
+		print.PrintQuoteUtils.selectQuantityByQuantityValue(quantity, false);
+	},
+	isAvaliableQuantity : function(quantity){
+		var available = false;
+		$('.print-possible-quantity').each(function(){
+			if($(this).data('value') === quantity){
+				available = true;
+				return true;
+			}
+		})
+		return available;
+	},
+	getDefaultQuantity : function(){
+		var quote = print.PrintQuoteUtils.activeConfiguration.quote;
+		
+		// Quantity initial selection
+        var sides = $('#selectSides option:selected').attr('value');
+        var numberOfSides;
+        switch (sides) {
+            case "single":
+                numberOfSides = 1;
+                break;
+            case "tent": 	
+            	numberOfSides = 3; 
+            	break;
+            default:
+                numberOfSides = 2;
+                break;
+        }
+        var sku = print.PrintQuoteUtils.getSKU(numberOfSides);//handshakePage.getSku(numberOfSides);
+        var defaultQty = quote['defaultQuantityMatrix'][sku];
+        
+        return defaultQty;
+        /*
+        if (defaultQty != 0) {
+            $('#optQuantity option[value=' + defaultQty + ']').attr('selected', 'selected');
+            $('#optQuantity option[value=' + defaultQty + ']').prop('selected', true); 
+            $('#optQuantity').val(defaultQty.toString());
+            $('#optQuantity2 ul li').removeClass('selected');
+            $('#optQuantity2 ul li[data-value="' + defaultQty + '"]').addClass("selected");
+            $('#optQuantity2').children('span').html($('#optQuantity2 ul li[data-value="' + defaultQty + '"]').html());
+        }
+        */
+	},
+	getPrefferedQuantity : function(){
+		var quote = print.PrintQuoteUtils.activeConfiguration.quote;
+		if(quote !== null && 
+        		typeof(quote['quotePreferences']) !== 'undefined'){
+        	var prefferences = quote['quotePreferences'];
+        	//new menus come empty here and everything goes to S#@!~
+        	if(!print.PrintQuoteUtils.isEmptyObject(prefferences)){
+        		return prefferences['quantity'];
+            }
+        }
+		return null;
+	},
+	syncUserSelection : function(options){
+		var activeConfiguration = print.PrintQuoteUtils.activeConfiguration;
+		var userSelection = print.PrintQuoteUtils.userSelection;
+		
+		if(typeof(options) !== 'undefined' && typeof(options['paper']) !== 'undefined' && options.paper === true){
+			var paper = null;
+			$('.pq-paper-type').each(function(){
+				if($(this).hasClass('selected') && !$(this).hasClass('hide')){
+					paper = $(this).data('value');
+				}
+			})
+			userSelection.paper = paper;
+		}
+		
+		if(typeof(options) !== 'undefined' && typeof(options['quantity']) !== 'undefined' && options.quantity === true){
+			var quantity = null;
+			$('.print-possible-quantity').each(function(){
+				if($(this).hasClass('selected')){
+					quantity = $(this).data('value');
+				}
+			})
+			if(activeConfiguration.isTakeout){
+				if(userSelection.paper === 'hybrid' || userSelection.paper === 'synthetic'){
+					userSelection.quantity.takeout.specialPaper = quantity;
+				}else{
+					userSelection.quantity.selected = quantity;
+				}
+			}else{
+				userSelection.quantity.selected = quantity;
+				userSelection.quantity.takeout.specialPaper = null;
+			}
+		}
+	},
+	updatePrintQuotePrefferences: function() {
+    	var handshakePage= print.PrintQuote.Configurator.handshakePage;
+    	var menuId = print.PrintQuoteUtils.activeSelection.current_id;
+    	
+    	var sides = $('#selectSides').val();
+    	var lamination = 0;
+    	try{
+    		lamination = ($('#laminationSelect').val() == 'yes' ? 1 : 0);
+    	}catch(err){} 
+    	var bleeds = 0;
+    	try{
+    		bleeds = ($('#bleedsSelect').val() == 'yes' ? 1 : 0);
+    	}catch(err){}
+    	var quantity = 0;
+    	try{
+    		quantity = parseInt($('#optQuantity').val());
+    	}catch(err){}
+    	var paper = '';
+    	try{
+    		paper = $('#papersSelect').val();
+    	}catch(err){}
+    	
+    	/* TODO Check if this is actually needed and make it work correctly */
+        var updatePrintMenuSelectionsCallback = function(response) {
+    		if(response){
+    			console.log("updatePrintMenuSelections response:" + response);
+    		}
+    	} 
+    	
+    	var postData = {
+			'menu_id' :	menuId,
+			'sides' :	sides,
+			'lamination' :	lamination,
+			'bleeds' :	bleeds,
+			'menu_size' : handshakePage.menuSize,
+			'menu_pages' : handshakePage.menuPagesNo,
+			'quantity' : quantity,
+			'paper' : paper
+    	}
+    	
+    	$.post('/app/print/preferences/update', {data : JSON.stringify(postData)}).done(function(resp){
+    		if (!!resp.err) {
+    			//alert(resp.data);
+    		}else {
+    			var responseJSON = JSON.parse(resp.data);
+    			updatePrintMenuSelectionsCallback(responseJSON);
+    		}
+    	});	
+		
+    },
+}
